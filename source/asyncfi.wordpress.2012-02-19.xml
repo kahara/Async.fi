@@ -16,7 +16,7 @@
 <!-- 7. WordPress will then import each of the posts, pages, comments, categories, etc. -->
 <!--    contained in this file into your site. -->
 
-<!-- generator="WordPress/3.3.1" created="2012-02-11 13:42" -->
+<!-- generator="WordPress/3.3.1" created="2012-02-19 09:19" -->
 <rss version="2.0"
 	xmlns:excerpt="http://wordpress.org/export/1.1/excerpt/"
 	xmlns:content="http://purl.org/rss/1.0/modules/content/"
@@ -29,7 +29,7 @@
 	<title>Async.fi</title>
 	<link>https://async.fi</link>
 	<description>Joni Kähärä Presents Async.fi</description>
-	<pubDate>Sat, 11 Feb 2012 13:42:32 +0000</pubDate>
+	<pubDate>Sun, 19 Feb 2012 09:19:16 +0000</pubDate>
 	<language>en</language>
 	<wp:wxr_version>1.1</wp:wxr_version>
 	<wp:base_site_url>https://async.fi</wp:base_site_url>
@@ -1999,7 +1999,7 @@ http://www.bucketexplorer.com/documentation/amazon-s3--how-to-add-notification-o
 	<item>
 		<title>Cliptogif.com minutiae &amp; miscellanea</title>
 		<link>https://async.fi/?p=909</link>
-		<pubDate>Wed, 30 Nov 2011 00:00:00 +0000</pubDate>
+		<pubDate>Wed, 30 Nov -0001 00:00:00 +0000</pubDate>
 		<dc:creator>admin</dc:creator>
 		<guid isPermaLink="false">https://async.fi/?p=909</guid>
 		<description></description>
@@ -2050,7 +2050,7 @@ Do note that stock ffmpeg shipped with Debian 6 does not support video filters (
 	<item>
 		<title>Javascript namespacing</title>
 		<link>https://async.fi/?p=924</link>
-		<pubDate>Wed, 30 Nov 2011 00:00:00 +0000</pubDate>
+		<pubDate>Wed, 30 Nov -0001 00:00:00 +0000</pubDate>
 		<dc:creator>admin</dc:creator>
 		<guid isPermaLink="false">https://async.fi/?p=924</guid>
 		<description></description>
