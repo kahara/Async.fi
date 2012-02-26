@@ -3,7 +3,6 @@
 
 import sys, os, datetime, time, json, uuid
 from lxml import etree
-from operator import itemgetter
 
 
 def usage():
@@ -23,9 +22,9 @@ datetimefmt_out = '%B %e, %Y'
 posts = []  # individual posts, sorted form newest to oldest; items below refer to post's 'id's
 site = {
     'posts': [],       # same list as above, cut into chunks of ten
-    'categories': {},  # key is a category, contains a list of post ids
-    'tags': {},        # key is a tag, contains a list of post ids
-    'years': {},       # each year contains a dict of n months; each month contains a list of n posts
+    'categories': {},  # key is a category, contains a list of post ids (chunked)
+    'tags': {},        # key is a tag, contains a list of post ids (cunked)
+    'years': {},       # each year contains a dict of n months; each month contains a list of n posts (chunked)
     }
 
 for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
@@ -43,7 +42,7 @@ for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
             'tags': [tag.text for tag in post.xpath('tags')[0]],
             'slug': post.xpath('slug')[0].text,
             'title': post.xpath('title')[0].text,
-            'body': post.xpath('body')[0].text,
+            #'body': post.xpath('body')[0].text,
             })
 posts.sort(key = lambda post: post['published'], reverse=True)
 
@@ -78,10 +77,40 @@ for post in posts:
             x = site['tags'][tag]
         x.append(post['id'])
 
+    #
+    # year
+    #
+    try:
+        x = site['years'][post['published'].year]['posts']
+    except(KeyError):
+        site['years'][post['published'].year] = {
+            'posts': [],
+            'months': {}
+        }
+        x = site['years'][post['published'].year]['posts']
+    x.append(post['id'])
+    
+    #
+    # month
+    #
+    try:
+        x = site['years'][post['published'].year]['months'][post['published'].month]
+    except:
+        site['years'][post['published'].year]['months'][post['published'].month] = []
+        x = site['years'][post['published'].year]['months'][post['published'].month]
+    x.append(post['id'])
+    
 for tag, tagposts in site['tags'].items():
     site['tags'][tag] = chunks(tagposts)
 
 for category, categoryposts in site['categories'].items():
     site['categories'][category] = chunks(categoryposts)
 
+for year in site['years']:
+    site['years'][year]['posts'] = chunks(site['years'][year]['posts'])
+    for month in site['years'][year]['months']:
+        site['years'][year]['months'][month] = chunks(site['years'][year]['months'][month])
+
 site['posts'] = chunks([post['id'] for post in posts])
+
+print json.dumps(site, sort_keys=True, indent=4)

@@ -1893,5 +1893,163 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
 <pre>45 3 * * * /usr/bin/nice -n 20 &lt;dir&gt;/wp-db-backup.sh &gt;/dev/null 2&gt;&amp;1</pre>
 &nbsp;]]></body>
   </post>
+
+  <!-- TESTING -->
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-1</slug>
+    <title>Test 1</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 1
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-2</slug>
+    <title>Test 2</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 2
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-3</slug>
+    <title>Test 3</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 3
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-4</slug>
+    <title>Test 4</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 4
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-5</slug>
+    <title>Test 5</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 5
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-6</slug>
+    <title>Test 6</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 6
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-7</slug>
+    <title>Test 7</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 7
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-8</slug>
+    <title>Test 1</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 8
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-9</slug>
+    <title>Test 9</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 9
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-10</slug>
+    <title>Test 10</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 10
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-11</slug>
+    <title>Test 11</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 11
+    </body>
+  </post>
+
+  <post>
+    <published>2012-02-26 01:23:45</published>
+    <slug>test-12</slug>
+    <title>Test 12</title>
+    <category>experimental</category>
+    <tags>
+      <tag>test</tag>
+    </tags>
+    <body>
+      Test 12
+    </body>
+  </post>
+
 </posts>
 
