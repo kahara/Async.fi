@@ -1,0 +1,15 @@
+<article class="post">
+  <h2><a href="{{link}}" rel="bookmark" title="Permanent Link to {{title}}">{{title}}</a></h2>
+  <time><a href="{{link}}" rel="bookmark" title="Permanent Link to {{title}}">{{published}}</a></time>
+  {{body}}
+  <hr class="clearfix" />
+  <p class="tags"><strong>Tagged with:</strong>
+    {{#tags}}
+    <a href="{{base}}tag/{{.}}/" rel="tag">{{.}}</a>
+    {{/tags}}
+  </p>
+  
+  <p class="categories"><strong>Categorised as:</strong>
+    <a href="{{base}}category/{{category}}/" title="View all posts in {{category}}" rel="category tag">{{category}}</a>
+  </p>
+</article>

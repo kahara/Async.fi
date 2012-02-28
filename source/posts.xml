@@ -11,7 +11,7 @@
 As far as I can tell (which, I'll be the first one to admit, doesn't count for that much) this code is so simple that there are no holes that could be exploited.
 </p>
 
-[c]
+<pre>
   char * query = getenv(&quot;QUERY_STRING&quot;);
   char * pair;
   char * key;
@@ -31,7 +31,7 @@ As far as I can tell (which, I'll be the first one to admit, doesn't count for t
       pair = strtok((char *)0, &quot;&amp;amp;&quot;);
     }
   }
-[/c] ]]></body>
+</pre> ]]></body>
   </post>
   <post>
     <published>2010-11-21 10:50:00</published>
@@ -1905,6 +1905,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 1
+      <p>xxx</p>
     </body>
   </post>
 
@@ -1918,6 +1919,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 2
+      <p>xxx</p>
     </body>
   </post>
 
@@ -1931,6 +1933,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 3
+      <p>xxx</p>
     </body>
   </post>
 
@@ -1944,6 +1947,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 4
+      <p>xxx</p>
     </body>
   </post>
 
@@ -1957,6 +1961,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 5
+      <p>xxx</p>
     </body>
   </post>
 
@@ -1970,6 +1975,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 6
+      <p>xxx</p>
     </body>
   </post>
 
@@ -1983,6 +1989,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 7
+      <p>xxx</p>
     </body>
   </post>
 
@@ -1996,6 +2003,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 8
+      <p>xxx</p>
     </body>
   </post>
 
@@ -2009,6 +2017,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 9
+      <p>xxx</p>
     </body>
   </post>
 
@@ -2022,6 +2031,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 10
+      <p>xxx</p>
     </body>
   </post>
 
@@ -2035,6 +2045,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body>
       Test 11
+      <p>xxx</p>
     </body>
   </post>
 

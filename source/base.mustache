@@ -47,21 +47,15 @@
     <div id="wrapper">
       
       <header>
-	<h1><a href="/">Async.fi</a></h1>
+	<h1><a href="{{base}}">Async.fi</a></h1>
       </header>
-
+      
       <section>
-	{{posts}}	
-	<!--
-	<article class="post-878 post type-post status-publish format-standard hentry category-meta tag-cdn tag-cloudfront tag-minify tag-super-cache" id="post-878">
-	  <h2><a href="https://async.fi/2011/08/site-optimizations/" rel="bookmark" title="Permanent Link to Site op­ti­miza­tions">Site op­ti­miza­tions</a></h2>
-	  <time><a href="https://async.fi/2011/08/site-optimizations/" rel="bookmark" title="Permanent Link to Site op­ti­miza­tions">August 15, 2011</a></time>
-	  POST CONTENT
-	  <hr class="clearfix" />
-	</article>
-	-->
-
-	{{prevnext}}
+	{{#posts}}
+	{{.}}
+	{{/posts}}
+	
+	<!--{{prevnext}}-->
 	<!--
 	<ul class="prevnext">
 	  <li><a href="https://async.fi/page/4/" >&lt; Older Entries</a></li>

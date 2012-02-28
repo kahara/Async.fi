@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-import sys, os, datetime, time, json, uuid
+import sys, os, datetime, time, json, uuid, pystache, SimpleHTTPServer, SocketServer
 from lxml import etree
 
 
@@ -18,6 +18,9 @@ except:
 datetimefmt_in = '%Y-%m-%d %H:%M:%S'
 datetimefmt_out = '%B %e, %Y'
 
+bucket = 'www.j-gw.com'
+base = '/'
+
 
 posts = []  # individual posts, sorted form newest to oldest; items below refer to post's 'id's
 site = {
@@ -25,6 +28,7 @@ site = {
     'categories': {},  # key is a category, contains a list of post ids (chunked)
     'tags': {},        # key is a tag, contains a list of post ids (cunked)
     'years': {},       # each year contains a dict of n months; each month contains a list of n posts (chunked)
+    
     }
 
 for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
@@ -37,14 +41,15 @@ for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
     
     posts.append({
             'id': uuid.uuid4().hex,
+            'link': '%s%04d/%02d/%s/' % (base, published.year, published.month, post.xpath('slug')[0].text),
             'published': published,
             'category': post.xpath('category')[0].text,
             'tags': [tag.text for tag in post.xpath('tags')[0]],
             'slug': post.xpath('slug')[0].text,
             'title': post.xpath('title')[0].text,
-            #'body': post.xpath('body')[0].text,
+            'body': post.xpath('body')[0].text,
             })
-posts.sort(key = lambda post: post['published'], reverse=True)
+#posts.sort(key = lambda post: post['published'], reverse=True)
 
 
 # http://stackoverflow.com/a/1751478
@@ -113,4 +118,69 @@ for year in site['years']:
 
 site['posts'] = chunks([post['id'] for post in posts])
 
-print json.dumps(site, sort_keys=True, indent=4)
+for post in posts:
+    post['published'] = post['published'].strftime(datetimefmt_out)
+    post['title'] = post['title'].replace('"', '')
+
+
+loader = pystache.Loader()
+base_tmpl = loader.load_template('base', 'source', 'utf-8')
+post_tmpl = loader.load_template('post', 'source', 'utf-8')
+
+
+if action == 'preview':
+    
+    class Handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            
+            parts = self.path.split('/')[1:]
+            
+            # root
+            if len(parts) < 2:
+                self.send_response(200)
+                self.send_header('Content-type','text/html;charset=utf8')
+                self.end_headers()
+                attrs = {
+                    'base': base,
+                    'posts': [pystache.render(post_tmpl, post) for post in posts[:5]]
+                    }                
+                self.wfile.write(pystache.render(base_tmpl, attrs).encode('utf-8'))
+                return
+
+            # media
+            elif parts[0] == 'media':
+                self.send_response(200)
+                filename = parts[-1]
+                extension = filename.split('.')[1]
+                if extension == 'jpg':
+                    self.send_header('Content-type','image/jpg')
+                elif extension == 'png':
+                    self.send_header('Content-type','image/png')
+                self.end_headers()
+                self.wfile.write(open('./source/' + '/'.join(parts)).read())
+            
+            # asset
+            elif parts[0] == 'asset':
+                self.send_response(200)
+                filename = parts[-1]
+                extension = filename.split('.')[1]
+                if extension == 'css':
+                    self.send_header('Content-type','text/css')
+                elif extension == 'js':
+                    self.send_header('Content-type','application/javascript')
+                self.end_headers()
+                self.wfile.write(open('./source/' + '/'.join(parts)).read())
+            
+
+    server = SocketServer.TCPServer(("", 8080), Handler)
+    server.serve_forever()
+    
+#
+# start rendering site, first the front page
+#
+# attrs = {
+#     'base': base,
+#     'posts': [pystache.render(post_tmpl, post) for post in posts[:5]]
+#     }
+
+# print pystache.render(base_tmpl, attrs)
