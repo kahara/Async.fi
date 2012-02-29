@@ -126,7 +126,25 @@ for post in posts:
 loader = pystache.Loader()
 base_tmpl = loader.load_template('base', 'source', 'utf-8')
 post_tmpl = loader.load_template('post', 'source', 'utf-8')
+list_tmpl = loader.load_template('list', 'source', 'utf-8')
 
+recent = pystache.render(list_tmpl, { 'items': [{ 'link': post['link'], 'title': post['title']  } for post in posts[:5]] }).encode('utf-8')
+print recent 
+
+archives = []
+for year in site['years']:
+    for month in site['years'][year]['months']:        
+        count = 0
+        for parts in site['years'][year]['months'][month]:
+            count += len(parts)
+        archives.append({
+                'link': '/%s/%s/' % (year, month),
+                'title': '%s %s' % (month, year),
+                'count': '%s' % count
+                })
+archives = pystache.render(list_tmpl, { 'items': archives } ).encode('utf-8')
+
+categories = pystache.render(list_tmpl, { 'items': [{ 'link': '/category/%s/' % (category, ), 'title': category } for category in site['categories']] }).encode('utf-8')
 
 if action == 'preview':
     
@@ -142,7 +160,10 @@ if action == 'preview':
                 self.end_headers()
                 attrs = {
                     'base': base,
-                    'posts': [pystache.render(post_tmpl, post) for post in posts[:5]]
+                    'recent': recent,
+                    'archives': archives,
+                    'categories': categories,
+                    'posts': [pystache.render(post_tmpl, post) for post in posts[:10]]
                     }                
                 self.wfile.write(pystache.render(base_tmpl, attrs).encode('utf-8'))
                 return
