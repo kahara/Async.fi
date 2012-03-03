@@ -288,6 +288,10 @@ attrs['posts'] = [pystache.render(error_tmpl, None)]
 open('./target/404.html', 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
 
 
+# robots.txt
+open('./target/robots.txt', 'w').write(open('./source/robots.txt').read())
+
+
 if action == 'preview':
     import SimpleHTTPServer
     import SocketServer

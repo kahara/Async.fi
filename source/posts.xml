@@ -1911,9 +1911,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body><![CDATA[
       <p>
-	Having been fed up with wastefulness (resource wise) of MySQL/PHP/WordPress for some time, I have now
-	moved this site to S3/CloudFront. Site is generated with a Python script that is hosted <a href="https://github.com/kahara/Async.fi">here</a>.
-	Commenting is obviously impossible but if you for some reason need to contact me you'll find contact details on your left.
+      Having been fed up with wastefulness (resource wise) and general slowness of the MySQL/PHP/WordPress/CloudFlare setup for some time, I have now moved this site to S3/CloudFront. Site is generated from an XML file (which I derived from a WordPress export dump) with a Python script that is hosted <a href="https://github.com/kahara/Async.fi">here</a>. Commenting is obviously impossible but if you for some reason need to contact me you'll find contact details on your left.
       </p>
     ]]></body>
   </post>
