@@ -1895,7 +1895,29 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
 <pre>45 3 * * * /usr/bin/nice -n 20 &lt;dir&gt;/wp-db-backup.sh &gt;/dev/null 2&gt;&amp;1</pre>
 &nbsp;]]></body>
   </post>
-
+  
+  <post>
+    <published>2012-03-03 10:00:00</published>
+    <slug>gone-static</slug>
+    <title>Gone static</title>
+    <category>meta</category>
+    <tags>
+      <tag>aws</tag>
+      <tag>s3</tag>
+      <tag>cloudfront</tag>
+      <tag>mysql</tag>
+      <tag>php</tag>
+      <tag>wordpress</tag>
+    </tags>
+    <body><![CDATA[
+      <p>
+	Having been fed up with wastefulness (resource wise) of MySQL/PHP/WordPress for some time, I have now
+	moved this site to S3/CloudFront. Site is generated with a Python script that is hosted <a href="https://github.com/kahara/Async.fi">here</a>.
+	Commenting is obviously impossible but if you for some reason need to contact me you'll find contact details on your left.
+      </p>
+    ]]></body>
+  </post>
+  
   <!-- TESTING -->
   <!-- <post> -->
   <!--   <published>2012-02-26 01:23:45</published> -->

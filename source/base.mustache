@@ -65,12 +65,12 @@
       <nav>
 	
 	<ul>
-	  <aside id="search-3" class="widget widget_search">
-	    <form role="search" method="get" id="searchform" action="https://async.fi/" >
-	      <div><label class="screen-reader-text" for="s">Search for:</label>
-		<input type="text" value="" name="s" id="s" />
-		<input type="submit" id="searchsubmit" value="Search" />
-	      </div>
+	  <aside id="search" class="widget widget_search">
+	    <form id="cse-search-box" action="http://google.com/cse" style="margin-bottom: 0.65em;">
+	      <input type="hidden" name="cx" value="013195161865949220878:l1y-926apew" />
+	      <input type="hidden" name="ie" value="UTF-8" />
+	      <input type="text" name="q" size="23" />
+	      <input type="submit" name="sa" value="Search" />
 	    </form>
 	  </aside>
 	  
@@ -78,7 +78,6 @@
 	    <h3 class="widgettitle">Recent Posts</h3>
 	    <ul>
 	      {{recent}}
-	      <!--<li><a href="https://async.fi/2012/02/daily-mysql-database-dump-back-up-to-s3/" title="Daily MySQL data­base dump, back up to S3">Daily MySQL data­base dump, back up to S3</a></li>-->
 	    </ul>
 	  </aside>
 	  
@@ -86,18 +85,20 @@
 	    <h3 class="widgettitle">Archives</h3>
 	    <ul>
 	      {{archives}}
-	      <!--<li><a href='https://async.fi/2012/02/' title='February 2012'>February 2012</a>&nbsp;(1)</li>-->
 	    </ul>
 	  </aside>
 	  
 	  <aside id="categories-3" class="widget widget_categories"><h3 class="widgettitle">Categories</h3>
 	    <ul>
 	      {{categories}}
-	      <!--
-		  <li class="cat-item cat-item-83">
-		    <a href="https://async.fi/category/experimental/" title="View all posts filed under Experimental"
-		       Experimental
-		       </a></li>-->
+	    </ul>
+	  </aside>
+
+	  <aside id="contact" class="widget widget_categories"><h3 class="widgettitle">Contact</h3>
+	    <ul>
+	      <li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li>
+	      <li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li>
+	      <li><a href="http://twitter.com/kahara">@kahara</a></li>
 	    </ul>
 	  </aside>
 	  

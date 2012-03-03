@@ -1,9 +1,14 @@
 #!/usr/bin/env python
+from __future__ import generators
 
-
-import sys, os, shutil, datetime, time, json, uuid, pystache, SimpleHTTPServer, SocketServer
+import sys, os, shutil, time, datetime, time, json, uuid, pystache, re, cgi, SimpleHTTPServer, SocketServer
 from lxml import etree
+from BeautifulSoup import BeautifulSoup
 from copy import deepcopy
+import boto
+from boto.s3.bucket import Bucket
+from boto.s3.key import Key
+
 
 def usage():
     print 'usage: %s [preview|deploy]'
@@ -18,7 +23,8 @@ except:
 datetimefmt_in = '%Y-%m-%d %H:%M:%S'
 datetimefmt_out = '%B %e, %Y'
 
-bucket = 'www.j-gw.com'
+bucketname = 'www.async.fi'
+base = 'http://www.async.fi'
 
 posts = []  # individual posts, sorted form newest to oldest; items below refer to post's 'id's
 site = {
@@ -44,7 +50,7 @@ for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
             'category': post.xpath('category')[0].text,
             'tags': [tag.text for tag in post.xpath('tags')[0]],
             'slug': post.xpath('slug')[0].text,
-            'title': post.xpath('title')[0].text,
+            'title': cgi.escape(post.xpath('title')[0].text),
             'body': post.xpath('body')[0].text,
             })
 posts.sort(key = lambda post: post['published'], reverse=True)
@@ -247,6 +253,41 @@ for tag in site['tags']:
         open('./target/tag/%s/page/%d/index.html' % (tag, index+1) if index > 0 else './target/tag/%s/index.html' % (tag, ), 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
 
 
+# feed
+os.mkdir('./target/feed')
+feed_tmpl = loader.load_template('feed', 'source', 'utf-8')
+
+attrs = {
+    'base': base,
+    'lastBuildDate': time.strftime('%a, %d %b %Y %H:%M:%S +0000', time.gmtime()),
+    'items': [{
+            'title': post['title'],
+            'link': post['link'],
+            'pubDate': post['published'].strftime('%a, %d %b %Y %H:%M:%S +0000'),
+            'category': post['category'],
+            'tags': post['tags'],
+            'description': ' '.join(''.join([e for e in BeautifulSoup(post['body']).recursiveChildGenerator() if isinstance(e,unicode)]).split(' ')[:23]),
+            'content': post['body'].replace('href="/media/', 'href="%s/media/' % (base, )).replace('src="/media/', 'src="%s/media/' % (base, )),
+            } for post in posts]
+}
+open('./target/feed/index.html', 'w').write(pystache.render(feed_tmpl, attrs).encode('utf-8'))
+
+
+# sitemap.xml
+sitemap = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+for post in posts:
+    sitemap += '<url><loc>' + base + post['link'] + '</loc></url>\n'
+sitemap += '</urlset>'
+open('./target/sitemap.xml', 'w').write(sitemap)
+
+
+# 404
+error_tmpl = loader.load_template('error', 'source', 'utf-8')
+attrs = deepcopy(baseattrs)
+attrs['posts'] = [pystache.render(error_tmpl, None)]
+open('./target/404.html', 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
+
+
 if action == 'preview':
     import SimpleHTTPServer
     import SocketServer
@@ -257,7 +298,30 @@ if action == 'preview':
     print "previewing at port", PORT
     httpd.serve_forever()
 
+
     
 elif action == 'deploy':
-    # ...
-    pass
+
+    # http://code.activestate.com/recipes/105873-walk-a-directory-tree-using-a-generator/
+    def dirwalk(dir):
+        "walk a directory tree, using a generator"
+        for f in os.listdir(dir):
+            fullpath = os.path.join(dir,f)
+            if os.path.isdir(fullpath) and not os.path.islink(fullpath):
+                for x in dirwalk(fullpath):  # recurse into subdir
+                    yield x
+            else:
+                yield fullpath
+    
+    connection = boto.connect_s3()
+    bucket = Bucket(connection, bucketname)
+    
+    for filename in dirwalk('./target/'):
+        target = filename.replace('./target', '')
+        k = Key(bucket)
+        k.key = target
+        print 'uploading', target
+        if target == '/feed/index.html':
+            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=3600', 'Content-Type': 'application/xml'})
+        else:
+            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=3600'})
