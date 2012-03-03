@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 
-import sys, os, datetime, time, json, uuid, pystache, SimpleHTTPServer, SocketServer
+import sys, os, shutil, datetime, time, json, uuid, pystache, SimpleHTTPServer, SocketServer
 from lxml import etree
-
+from copy import deepcopy
 
 def usage():
     print 'usage: %s [preview|deploy]'
@@ -19,8 +19,6 @@ datetimefmt_in = '%Y-%m-%d %H:%M:%S'
 datetimefmt_out = '%B %e, %Y'
 
 bucket = 'www.j-gw.com'
-base = '/'
-
 
 posts = []  # individual posts, sorted form newest to oldest; items below refer to post's 'id's
 site = {
@@ -41,7 +39,7 @@ for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
     
     posts.append({
             'id': uuid.uuid4().hex,
-            'link': '%s%04d/%02d/%s/' % (base, published.year, published.month, post.xpath('slug')[0].text),
+            'link': '/%04d/%02d/%s/' % (published.year, published.month, post.xpath('slug')[0].text),
             'published': published,
             'category': post.xpath('category')[0].text,
             'tags': [tag.text for tag in post.xpath('tags')[0]],
@@ -49,7 +47,7 @@ for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
             'title': post.xpath('title')[0].text,
             'body': post.xpath('body')[0].text,
             })
-#posts.sort(key = lambda post: post['published'], reverse=True)
+posts.sort(key = lambda post: post['published'], reverse=True)
 
 
 # http://stackoverflow.com/a/1751478
@@ -119,7 +117,7 @@ for year in site['years']:
 site['posts'] = chunks([post['id'] for post in posts])
 
 for post in posts:
-    post['published'] = post['published'].strftime(datetimefmt_out)
+    post['pretty_published'] = post['published'].strftime(datetimefmt_out)
     post['title'] = post['title'].replace('"', '')
 
 
@@ -128,80 +126,138 @@ base_tmpl = loader.load_template('base', 'source', 'utf-8')
 post_tmpl = loader.load_template('post', 'source', 'utf-8')
 list_tmpl = loader.load_template('list', 'source', 'utf-8')
 
-recent = pystache.render(list_tmpl, { 'items': [{ 'link': post['link'], 'title': post['title']  } for post in posts[:5]] }).encode('utf-8')
-print recent 
+monthnames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
+recent = pystache.render(list_tmpl, { 'items': [{ 'link': post['link'], 'title': post['title']  } for post in posts[:5]] }).encode('utf-8')
 archives = []
+
+years = []
 for year in site['years']:
-    for month in site['years'][year]['months']:        
+    years.append(year)
+years.reverse()
+for year in years:    
+    months = []
+    for month in site['years'][year]['months']:
+        months.append(month)
+    months.reverse()        
+    for month in months:
         count = 0
         for parts in site['years'][year]['months'][month]:
             count += len(parts)
         archives.append({
-                'link': '/%s/%s/' % (year, month),
-                'title': '%s %s' % (month, year),
+                'link': '/%04d/%02d/' % (year, month),
+                'title': '%s %04d' % (monthnames[month], year),
                 'count': '%s' % count
                 })
 archives = pystache.render(list_tmpl, { 'items': archives } ).encode('utf-8')
-
 categories = pystache.render(list_tmpl, { 'items': [{ 'link': '/category/%s/' % (category, ), 'title': category } for category in site['categories']] }).encode('utf-8')
 
+baseattrs = {
+    'recent': recent,
+    'archives': archives,
+    'categories': categories
+}
+
+
+shutil.rmtree('./target', ignore_errors=True)
+os.mkdir('./target')
+
+
+# media, asset
+shutil.rmtree('./target/media', ignore_errors=True)
+shutil.copytree('./source/media', './target/media')
+shutil.rmtree('./target/asset', ignore_errors=True)
+shutil.copytree('./source/asset', './target/asset')
+
+
+# root
+os.mkdir('./target/page')
+n = len(site['posts'])
+for index, page in enumerate(site['posts']):
+    os.mkdir('./target/page/%d' % (index+1, ))
+    attrs = deepcopy(baseattrs)
+    attrs['posts'] = [pystache.render(post_tmpl, getpost(post)) for post in page]
+    attrs['next'] = '/page/%d/' % (index+2, ) if index < n-1 else None
+    attrs['prev'] = '/page/%d/' % (index, ) if index > 1 else '/' if index > 0 else None
+    open('./target/page/%d/index.html' % (index+1, ) if index > 0 else './target/index.html', 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
+
+
+# years, months
+for year in site['years']:
+    os.mkdir('./target/%04d' % (year, ))
+    os.mkdir('./target/%04d/page' % (year, ))
+    n = len(site['years'][year]['posts'])
+    for index, page in enumerate(site['years'][year]['posts']):
+        os.mkdir('./target/%04d/page/%d' % (year, index+1, ))
+        attrs = deepcopy(baseattrs)
+        attrs['posts'] = [pystache.render(post_tmpl, getpost(post)) for post in page]
+        attrs['next'] = '/%04d/page/%d/' % (year, index+2) if index < n-1 else None
+        attrs['prev'] = '/%04d/page/%d/' % (year, index) if index > 1 else '/%04d/' % (year, ) if index > 0 else None
+        open('./target/%04d/page/%d/index.html' % (year, index+1) if index > 0 else './target/%04d/index.html' % (year, ), 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
+    
+    for month in site['years'][year]['months']:
+        os.mkdir('./target/%04d/%02d' % (year, month))
+        os.mkdir('./target/%04d/%02d/page' % (year, month))
+        n = len(site['years'][year]['months'][month])
+        
+        for index, page in enumerate(site['years'][year]['months'][month]):
+            os.mkdir('./target/%04d/%02d/page/%d' % (year, month, index+1, ))
+            attrs = deepcopy(baseattrs)
+            attrs['posts'] = [pystache.render(post_tmpl, getpost(post)) for post in page]
+            attrs['next'] = '/%04d/%02d/page/%d/' % (year, month, index+2) if index < n-1 else None
+            attrs['prev'] = '/%04d/%02d/page/%d/' % (year, month, index) if index > 1 else '/%04d/%02d/' % (year, month) if index > 0 else None
+            open('./target/%04d/%02d/page/%d/index.html' % (year, month, index+1) if index > 0 else './target/%04d/%02d/index.html' % (year, month), 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
+
+
+# individual posts
+for post in posts:
+    os.mkdir('./target/%04d/%02d/%s' % (post['published'].year, post['published'].month, post['slug']))
+    attrs = deepcopy(baseattrs)
+    attrs['posts'] = []
+    attrs['posts'].append(pystache.render(post_tmpl, post))
+    open('./target/%04d/%02d/%s/index.html' % (post['published'].year, post['published'].month, post['slug']), 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
+
+
+# categories
+os.mkdir('./target/category')
+for category in site['categories']:
+    os.mkdir('./target/category/%s' % (category, ))
+    os.mkdir('./target/category/%s/page' % (category, ))
+    n = len(site['categories'][category])
+    for index, page in enumerate(site['categories'][category]):        
+        os.mkdir('./target/category/%s/page/%d' % (category, index+1, ))
+        attrs = deepcopy(baseattrs)
+        attrs['posts'] = [pystache.render(post_tmpl, getpost(post)) for post in page]
+        attrs['next'] = '/category/%s/page/%d/' % (category, index+2) if index < n-1 else None
+        attrs['prev'] = '/category/%s/page/%d/' % (category, index) if index > 1 else '/category/%s/' % (category, ) if index > 0 else None
+        open('./target/category/%s/page/%d/index.html' % (category, index+1) if index > 0 else './target/category/%s/index.html' % (category, ), 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
+
+# tags
+os.mkdir('./target/tag')
+for tag in site['tags']:
+    os.mkdir('./target/tag/%s' % (tag, ))
+    os.mkdir('./target/tag/%s/page' % (tag, ))
+    n = len(site['tags'][tag])
+    for index, page in enumerate(site['tags'][tag]):        
+        os.mkdir('./target/tag/%s/page/%d' % (tag, index+1, ))
+        attrs = deepcopy(baseattrs)
+        attrs['posts'] = [pystache.render(post_tmpl, getpost(post)) for post in page]
+        attrs['next'] = '/tag/%s/page/%d/' % (tag, index+2) if index < n-1 else None
+        attrs['prev'] = '/tag/%s/page/%d/' % (tag, index) if index > 1 else '/tag/%s/' % (tag, ) if index > 0 else None
+        open('./target/tag/%s/page/%d/index.html' % (tag, index+1) if index > 0 else './target/tag/%s/index.html' % (tag, ), 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
+
+
 if action == 'preview':
+    import SimpleHTTPServer
+    import SocketServer
+    PORT = 8000
+    Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+    os.chdir('./target')
+    httpd = SocketServer.TCPServer(("", PORT), Handler)
+    print "previewing at port", PORT
+    httpd.serve_forever()
+
     
-    class Handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
-        def do_GET(self):
-            
-            parts = self.path.split('/')[1:]
-            
-            # root
-            if len(parts) < 2:
-                self.send_response(200)
-                self.send_header('Content-type','text/html;charset=utf8')
-                self.end_headers()
-                attrs = {
-                    'base': base,
-                    'recent': recent,
-                    'archives': archives,
-                    'categories': categories,
-                    'posts': [pystache.render(post_tmpl, post) for post in posts[:10]]
-                    }                
-                self.wfile.write(pystache.render(base_tmpl, attrs).encode('utf-8'))
-                return
-
-            # media
-            elif parts[0] == 'media':
-                self.send_response(200)
-                filename = parts[-1]
-                extension = filename.split('.')[1]
-                if extension == 'jpg':
-                    self.send_header('Content-type','image/jpg')
-                elif extension == 'png':
-                    self.send_header('Content-type','image/png')
-                self.end_headers()
-                self.wfile.write(open('./source/' + '/'.join(parts)).read())
-            
-            # asset
-            elif parts[0] == 'asset':
-                self.send_response(200)
-                filename = parts[-1]
-                extension = filename.split('.')[1]
-                if extension == 'css':
-                    self.send_header('Content-type','text/css')
-                elif extension == 'js':
-                    self.send_header('Content-type','application/javascript')
-                self.end_headers()
-                self.wfile.write(open('./source/' + '/'.join(parts)).read())
-            
-
-    server = SocketServer.TCPServer(("", 8080), Handler)
-    server.serve_forever()
-    
-#
-# start rendering site, first the front page
-#
-# attrs = {
-#     'base': base,
-#     'posts': [pystache.render(post_tmpl, post) for post in posts[:5]]
-#     }
-
-# print pystache.render(base_tmpl, attrs)
+elif action == 'deploy':
+    # ...
+    pass

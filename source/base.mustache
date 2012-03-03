@@ -55,13 +55,11 @@
 	{{.}}
 	{{/posts}}
 	
-	<!--{{prevnext}}-->
-	<!--
 	<ul class="prevnext">
-	  <li><a href="https://async.fi/page/4/" >&lt; Older Entries</a></li>
-	  <li><a href="https://async.fi/page/2/" >Newer Entries &gt;</a></li>
+	  {{#next}}<li><a href="{{.}}" >&lt; Older Entries</a></li>{{/next}}
+	  {{#prev}}<li><a href="{{.}}" >Newer Entries &gt;</a></li>{{/prev}}
 	</ul>
-	-->
+	
       </section>
       
       <nav>
