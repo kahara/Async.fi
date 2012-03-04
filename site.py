@@ -196,6 +196,8 @@ for year in site['years']:
     for index, page in enumerate(site['years'][year]['posts']):
         os.mkdir('./target/%04d/page/%d' % (year, index+1, ))
         attrs = deepcopy(baseattrs)
+        attrs['title'] = '%04d' % (year, )
+        attrs['description'] = 'Posts for year %04d' % (year, )
         attrs['posts'] = [pystache.render(post_tmpl, getpost(post)) for post in page]
         attrs['next'] = '/%04d/page/%d/' % (year, index+2) if index < n-1 else None
         attrs['prev'] = '/%04d/page/%d/' % (year, index) if index > 1 else '/%04d/' % (year, ) if index > 0 else None
@@ -205,10 +207,11 @@ for year in site['years']:
         os.mkdir('./target/%04d/%02d' % (year, month))
         os.mkdir('./target/%04d/%02d/page' % (year, month))
         n = len(site['years'][year]['months'][month])
-        
         for index, page in enumerate(site['years'][year]['months'][month]):
             os.mkdir('./target/%04d/%02d/page/%d' % (year, month, index+1, ))
             attrs = deepcopy(baseattrs)
+            attrs['title'] = '%s %04d' % (monthnames[month], year, )
+            attrs['description'] = 'Posts for %s %04d' % (monthnames[month], year)
             attrs['posts'] = [pystache.render(post_tmpl, getpost(post)) for post in page]
             attrs['next'] = '/%04d/%02d/page/%d/' % (year, month, index+2) if index < n-1 else None
             attrs['prev'] = '/%04d/%02d/page/%d/' % (year, month, index) if index > 1 else '/%04d/%02d/' % (year, month) if index > 0 else None
@@ -219,6 +222,8 @@ for year in site['years']:
 for post in posts:
     os.mkdir('./target/%04d/%02d/%s' % (post['published'].year, post['published'].month, post['slug']))
     attrs = deepcopy(baseattrs)
+    attrs['title'] = '%s' % (post['title'], )
+    attrs['description'] = '%s' % (post['title'], )
     attrs['posts'] = []
     attrs['posts'].append(pystache.render(post_tmpl, post))
     open('./target/%04d/%02d/%s/index.html' % (post['published'].year, post['published'].month, post['slug']), 'w').write(pystache.render(base_tmpl, attrs).encode('utf-8'))
@@ -233,6 +238,8 @@ for category in site['categories']:
     for index, page in enumerate(site['categories'][category]):        
         os.mkdir('./target/category/%s/page/%d' % (category, index+1, ))
         attrs = deepcopy(baseattrs)
+        attrs['title'] = '%s' % (category, )
+        attrs['description'] = 'Posts in category %s' % (category, )
         attrs['posts'] = [pystache.render(post_tmpl, getpost(post)) for post in page]
         attrs['next'] = '/category/%s/page/%d/' % (category, index+2) if index < n-1 else None
         attrs['prev'] = '/category/%s/page/%d/' % (category, index) if index > 1 else '/category/%s/' % (category, ) if index > 0 else None
@@ -247,6 +254,8 @@ for tag in site['tags']:
     for index, page in enumerate(site['tags'][tag]):        
         os.mkdir('./target/tag/%s/page/%d' % (tag, index+1, ))
         attrs = deepcopy(baseattrs)
+        attrs['title'] = '%s' % (tag, )
+        attrs['description'] = 'Posts tagged with %s' % (tag, )
         attrs['posts'] = [pystache.render(post_tmpl, getpost(post)) for post in page]
         attrs['next'] = '/tag/%s/page/%d/' % (tag, index+2) if index < n-1 else None
         attrs['prev'] = '/tag/%s/page/%d/' % (tag, index) if index > 1 else '/tag/%s/' % (tag, ) if index > 0 else None
