@@ -1911,6 +1911,10 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </tags>
     <body><![CDATA[
     <p>
+    <strong>Update 2:</strong> Looks like page load times, at least as reported by Pingdom, went up from what they initially were. In my own testing cached pages still load in something like 150 to 250 milliseconds but Pingdom disagees. I don't know if this is regular CloudFront performance fluctuation, some kind of impedance mismatch between Pingdom and CloudFront or "something else".
+    <a href="/media/2012/03/Pingdom-2012-03-06.png"><img class="aligncenter size-full" title="Pingdom" src="/media/2012/03/Pingdom-2012-03-06.png" alt="" width="550" /></a>
+    </p>
+    <p>
     <strong>Update:</strong> That really did the trick and the <a href="https://plus.google.com/112535968102790189432/posts/7trQ7LQdT36">estimated -90% page load time</a> wasn't that far off:
     <a href="/media/2012/03/Pingdom-2012-03-04.png"><img class="aligncenter size-full" title="Pingdom" src="/media/2012/03/Pingdom-2012-03-04.png" alt="" width="550" /></a>
     </p>
