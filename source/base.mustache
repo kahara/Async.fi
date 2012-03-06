@@ -1,69 +1,34 @@
 <!DOCTYPE html>
-<html dir="ltr" lang="en-US">
+<html dir="ltr" lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="description" content="{{description}}{{^description}}Joni Kähärä Presents Async.fi{{/description}}" />
+    <meta charset="utf-8">    
     <title>{{title}} {{#title}}&#8226;{{/title}} Async.fi</title>
-    <link rel="stylesheet" href="/asset/style.css" type="text/css" media="screen" />
-    <link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/" />
-    <script src="/asset/html5.js"></script>
+    <meta name="description" content="{{description}}{{^description}}Joni Kähärä Presents Async.fi{{/description}}" />    
     <meta name="generator" content="https://github.com/kahara/Async.fi" />
     <meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4" />
-    <style type="text/css">
-      sup {
-      vertical-align: 60%;
-      font-size: 75%;
-      line-height: 100%;
-      }
-      sub {
-      vertical-align: -10%;
-      font-size: 75%;
-      line-height: 100%;
-      }
-      .amp {
-      font-family: Baskerville, "Goudy Old Style", "Palatino", "Book Antiqua", "Warnock Pro", serif;
-      font-weight: normal;
-      font-style: italic;
-      font-size: 1.1em;
-      line-height: 1em;
-      }
-      .caps {
-      font-size: 90%;
-      }
-      .dquo {
-      margin-left:-.40em;
-      }
-      .quo {
-      margin-left:-.2em;
-      }
-      /* because formatting .numbers should consider your current font settings, we will not style it here */
-    </style>
-  </head>
-  
-  <body class="home blog">
-    
+    <meta name="viewport" content="width=device-width">
+    <link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/" />
+    <link rel="stylesheet" href="{{assetbase}}/asset/style.css" type="text/css" media="screen" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>  
+  <body>    
     <script>var _gaq=[['_setAccount','UA-20895288-1'],['_trackPageview']];(function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.src='//www.google-analytics.com/ga.js';s.parentNode.insertBefore(g,s)}(document,'script'))</script>
-    
     <div id="wrapper">
-      
       <header>
 	<h1><a href="/">Async.fi</a></h1>
       </header>
-      
       <section>
 	{{#posts}}
 	{{.}}
 	{{/posts}}
-	
 	<ul class="prevnext">
 	  {{#next}}<li><a href="{{.}}" >&lt; Older Entries</a></li>{{/next}}
 	  {{#prev}}<li><a href="{{.}}" >Newer Entries &gt;</a></li>{{/prev}}
 	</ul>
-	
       </section>
-      
       <nav>
-	
 	<ul>
 	  <aside id="search" class="widget widget_search">
 	    <form id="cse-search-box" action="http://google.com/cse" style="margin-bottom: 0.65em;">
@@ -73,37 +38,33 @@
 	      <input type="submit" name="sa" value="Search" />
 	    </form>
 	  </aside>
-	  
-	  <aside id="recent-posts-3" class="widget widget_recent_entries">
+	  <aside id="recent-posts" class="widget widget_recent_entries">
 	    <h3 class="widgettitle">Recent Posts</h3>
 	    <ul>
 	      {{recent}}
 	    </ul>
 	  </aside>
-	  
-	  <aside id="archives-3" class="widget widget_archive">
+	  <aside id="archives" class="widget widget_archive">
 	    <h3 class="widgettitle">Archives</h3>
 	    <ul>
 	      {{archives}}
 	    </ul>
 	  </aside>
-	  
-	  <aside id="categories-3" class="widget widget_categories"><h3 class="widgettitle">Categories</h3>
+	  <aside id="categories" class="widget widget_categories">
+	    <h3 class="widgettitle">Categories</h3>
 	    <ul>
 	      {{categories}}
 	    </ul>
 	  </aside>
-
-	  <aside id="contact" class="widget widget_categories"><h3 class="widgettitle">Contact</h3>
+	  <aside id="contact" class="widget widget_categories">
+	    <h3 class="widgettitle">Contact</h3>
 	    <ul>
 	      <li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li>
 	      <li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li>
 	      <li><a href="http://twitter.com/kahara">@kahara</a></li>
 	    </ul>
 	  </aside>
-	  
       </nav>
-      
       <footer>
 	<p>
 	  &copy; 2012 Async.fi | Theme forked from <a href="http://www.stinkyinkshop.co.uk/themes/t/fiver-theme/">StinkyInk's "Fiver"</a>

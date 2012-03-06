@@ -25,14 +25,15 @@ datetimefmt_out = '%B %e, %Y'
 
 bucketname = 'www.async.fi'
 base = 'http://www.async.fi'
+mediabase = 'http://media.async.fi'
+assetbase = 'http://asset.async.fi'
 
 posts = []  # individual posts, sorted form newest to oldest; items below refer to post's 'id's
 site = {
     'posts': [],       # same list as above, cut into chunks of ten
     'categories': {},  # key is a category, contains a list of post ids (chunked)
     'tags': {},        # key is a tag, contains a list of post ids (cunked)
-    'years': {},       # each year contains a dict of n months; each month contains a list of n posts (chunked)
-    
+    'years': {},       # each year contains a dict of n months; each month contains a list of n posts (chunked)    
     }
 
 for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
@@ -51,7 +52,7 @@ for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
             'tags': [tag.text for tag in post.xpath('tags')[0]],
             'slug': post.xpath('slug')[0].text,
             'title': cgi.escape(post.xpath('title')[0].text),
-            'body': post.xpath('body')[0].text,
+            'body': post.xpath('body')[0].text.replace('href="/media/', 'href="%s/media/' % (mediabase, )).replace('src="/media/', 'src="%s/media/' % (mediabase, )) if action == 'deploy' else post.xpath('body')[0].text,
             })
 posts.sort(key = lambda post: post['published'], reverse=True)
 
@@ -159,6 +160,7 @@ archives = pystache.render(list_tmpl, { 'items': archives } ).encode('utf-8')
 categories = pystache.render(list_tmpl, { 'items': [{ 'link': '/category/%s/' % (category, ), 'title': category } for category in site['categories']] }).encode('utf-8')
 
 baseattrs = {
+    'assetbase': assetbase if action == 'deploy' else None,
     'recent': recent,
     'archives': archives,
     'categories': categories
@@ -301,6 +303,10 @@ open('./target/404.html', 'w').write(pystache.render(base_tmpl, attrs).encode('u
 open('./target/robots.txt', 'w').write(open('./source/robots.txt').read())
 
 
+# favicon.ico
+open('./target/favicon.ico', 'w').write(open('./source/favicon.ico').read())
+
+
 if action == 'preview':
     import SimpleHTTPServer
     import SocketServer
@@ -333,8 +339,14 @@ elif action == 'deploy':
         target = filename.replace('./target', '')
         k = Key(bucket)
         k.key = target
+        
         print 'uploading', target
-        if target == '/feed/index.html':
+        
+        if target.split('.')[-1] in ['jpg', 'png', 'gif', 'ico', 'css', 'js']:
+            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=172800'})
+
+        elif target == '/feed/index.html':
             k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=3600', 'Content-Type': 'application/xml'})
+
         else:
             k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=3600'})
