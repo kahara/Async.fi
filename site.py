@@ -334,11 +334,13 @@ elif action == 'deploy':
     
     connection = boto.connect_s3()
     bucket = Bucket(connection, bucketname)
+    bucket.set_acl('public-read')
     
     for filename in dirwalk('./target/'):
         target = filename.replace('./target', '')
         k = Key(bucket)
         k.key = target
+        k.set_acl('public-read')
         
         print 'uploading', target
         
