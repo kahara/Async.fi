@@ -346,7 +346,7 @@ elif action == 'deploy':
             k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=172800'})
 
         elif target == '/feed/index.html':
-            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=3600', 'Content-Type': 'application/xml'})
+            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=14400', 'Content-Type': 'application/xml'})
 
         else:
-            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=3600'})
+            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=14400'})
