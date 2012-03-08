@@ -1044,13 +1044,16 @@ That should do it. But like I said, my understanding of the system is very limit
       <tag>backbone-js</tag>
       <tag>tastypie</tag>
     </tags>
-    <body><![CDATA[The idea here is to periodically <code>fetch()</code> and keep the client and server Collections in sync in such a way that the consuming View(s) only get updated when a Model is added to or removed from a Collection, or the attributes of one of the Models in it change. What's done is:
+    <body><![CDATA[
+    <p>The idea here is to periodically <code>fetch()</code> and keep the client and server Collections in sync in such a way that the consuming View(s) only get updated when a Model is added to or removed from a Collection, or the attributes of one of the Models in it change. What's done is:
+    </p>
 <ul>
 	<li>Compare the existing Collection to the incoming set and remove every Model from the existing Collection that is not in the incoming set.</li>
 	<li>Compare the incoming set to the existing Collection and add every Model from the incoming set to the existing Collection that is not already there.</li>
 	<li>Compare each Model in the two sets and update the ones in the existing Collection to the ones in the incoming set that are different.</li>
 </ul>
-The first two steps compare the Model's <code>resource_uri</code>s and the last part is done with SHA1 hashes.
+
+<p>The first two steps compare the Model's <code>resource_uri</code>s and the last part is done with SHA1 hashes.</p>
 
 <pre>
 window.Model = Backbone.Model.extend({
@@ -1121,12 +1124,25 @@ window.Root = Backbone.Model.extend({
 </pre>
 
 <p>
+<strong>Update 3:</strong> looking at this afterwards, I'm not sure of the complete watertightness of the above. Perhaps the <a href="http://kilon.org/blog/2012/02/backbone-poller/">Backbone Poller</a> project would be be a better approach.
+</up>
+
+<p>
+<strong>Update 2:</strong> In order to avoid borking on an empty response, do:
+</p>
+
+<pre>
+var attrs = Backbone.Model.prototype.parse.call(this, data);
+if(!attrs) return;
+</pre>
+    
+<p>
 <strong>Update:</strong> My Javascript-Fu is weak which made me not see the obvious. As suggested in <a href="http://documentcloud.github.com/backbone/#Model-extend">Backbone.js documentation</a>, you can call the parent's implementation like this:
 </p>
 
-[js]
+<pre>
 Backbone.Model.prototype.method.call(this, args);
-[/js]
+</pre>
 
 <p>
 So, instead of unnecessarily copypasting behavior from <a href="https://github.com/PaulUithol/backbone-tastypie">Backbone-tastypie.js</a>, we can say: 
@@ -1139,15 +1155,6 @@ var attrs = Backbone.Model.prototype.parse.call(this, data);
 <p>
 &hellip;and still have Backbone-tastypie.js do it's parsing thing for us.
 </p>
-
-<p>
-<strong>Update2:</strong> In order to avoid borking on an empty response, do:
-</p>
-
-<pre>
-var attrs = Backbone.Model.prototype.parse.call(this, data);
-if(!attrs) return;
-</pre>
 
 <p>
 Ugh.
