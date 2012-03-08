@@ -334,21 +334,19 @@ elif action == 'deploy':
     
     connection = boto.connect_s3()
     bucket = Bucket(connection, bucketname)
-    bucket.set_acl('public-read')
     
     for filename in dirwalk('./target/'):
         target = filename.replace('./target', '')
         k = Key(bucket)
         k.key = target
-        k.set_acl('public-read')
         
         print 'uploading', target
         
-        if target.split('.')[-1] in ['jpg', 'png', 'gif', 'ico', 'css', 'js']:
-            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=172800'})
-
+        if  target.split('.')[-1] in ['jpg', 'png', 'gif', 'ico', 'css', 'js']:
+            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=31536000'})
+        
         elif target == '/feed/index.html':
-            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=14400', 'Content-Type': 'application/xml'})
+            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=86400', 'Content-Type': 'application/xml'})
 
         else:
-            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=14400'})
+            k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=86400'})
