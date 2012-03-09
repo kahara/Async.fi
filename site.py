@@ -24,7 +24,7 @@ def dirwalk(dir):
 
 
 def usage():
-    print 'usage: %s [preview|deploy]'
+    print 'usage: %s [preview|deploy|invalidate] <extension>'
     exit()
 
 try:
@@ -354,11 +354,17 @@ elif action == 'deploy':
             k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=86400'})
 
 elif action == 'invalidate':
+    try:
+        extension = '.' + sys.argv[2]
+    except:
+        usage()
+    
     indexes = []
     for filename in dirwalk('./target/'):
         target = filename.replace('./target', '')
-        if '.html' in target:
+        if extension in target:
             indexes.append(target)
-    print 'creating cache invalidation request for %d files' % (len(indexes))
+    
+    print 'creating cache invalidation request for %d files ending in "%s"' % (len(indexes), extension)
     connection = CloudFrontConnection()
     connection.create_invalidation_request(cf_distribution, indexes)
