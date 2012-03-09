@@ -8,6 +8,19 @@ from copy import deepcopy
 import boto
 from boto.s3.bucket import Bucket
 from boto.s3.key import Key
+from boto.cloudfront import CloudFrontConnection
+
+
+# http://code.activestate.com/recipes/105873-walk-a-directory-tree-using-a-generator/
+def dirwalk(dir):
+    "walk a directory tree, using a generator"
+    for f in os.listdir(dir):
+        fullpath = os.path.join(dir,f)
+        if os.path.isdir(fullpath) and not os.path.islink(fullpath):
+            for x in dirwalk(fullpath):  # recurse into subdir
+                yield x
+        else:
+            yield fullpath
 
 
 def usage():
@@ -27,6 +40,9 @@ bucketname = 'www.async.fi'
 base = 'http://www.async.fi'
 mediabase = 'http://media.async.fi'
 assetbase = 'http://asset.async.fi'
+
+cf_distribution = 'E1556WXIQRXJQ9'
+
 
 posts = []  # individual posts, sorted form newest to oldest; items below refer to post's 'id's
 site = {
@@ -317,24 +333,10 @@ if action == 'preview':
     print "previewing at port", PORT
     httpd.serve_forever()
 
-
     
 elif action == 'deploy':
-
-    # http://code.activestate.com/recipes/105873-walk-a-directory-tree-using-a-generator/
-    def dirwalk(dir):
-        "walk a directory tree, using a generator"
-        for f in os.listdir(dir):
-            fullpath = os.path.join(dir,f)
-            if os.path.isdir(fullpath) and not os.path.islink(fullpath):
-                for x in dirwalk(fullpath):  # recurse into subdir
-                    yield x
-            else:
-                yield fullpath
-    
     connection = boto.connect_s3()
-    bucket = Bucket(connection, bucketname)
-    
+    bucket = Bucket(connection, bucketname)    
     for filename in dirwalk('./target/'):
         target = filename.replace('./target', '')
         k = Key(bucket)
@@ -342,7 +344,7 @@ elif action == 'deploy':
         
         print 'uploading', target
         
-        if  target.split('.')[-1] in ['jpg', 'png', 'gif', 'ico', 'css', 'js']:
+        if  target.split('.')[-1] in ['jpg', 'png', 'gif', 'ico', 'css', 'js', 'txt']:
             k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=31536000'})
         
         elif target == '/feed/index.html':
@@ -350,3 +352,13 @@ elif action == 'deploy':
 
         else:
             k.set_contents_from_filename(filename, headers={'Cache-Control': 'max-age=86400'})
+
+elif action == 'invalidate':
+    indexes = []
+    for filename in dirwalk('./target/'):
+        target = filename.replace('./target', '')
+        if '.html' in target:
+            indexes.append(target)
+    print 'creating cache invalidation request for %d files' % (len(indexes))
+    connection = CloudFrontConnection()
+    connection.create_invalidation_request(cf_distribution, indexes)
