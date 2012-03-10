@@ -1,6 +1,6 @@
 <article class="post">
   <h2><a href="{{link}}" rel="bookmark" title="Permanent Link to {{title}}">{{title}}</a></h2>
-  <time><a href="{{link}}" rel="bookmark" title="Permanent Link to {{title}}">{{pretty_published}}</a></time>
+  <time datetime="{{formal_published}}"><a href="{{link}}" rel="bookmark" title="Permanent Link to {{title}}">{{pretty_published}}</a></time>
   {{body}}
   <hr class="clearfix" />
   <p class="tags"><strong>Tagged with:</strong>
@@ -9,6 +9,6 @@
     {{/tags}}
   </p>  
   <p class="categories"><strong>Categorised as:</strong>
-    <a href="/category/{{category}}/" title="View all posts in {{category}}" rel="category tag">{{category}}</a>
+    <a href="/category/{{category}}/" title="View all posts in {{category}}" rel="tag">{{category}}</a>
   </p>
 </article>

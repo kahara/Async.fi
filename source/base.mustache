@@ -3,12 +3,13 @@
   <head>
     <meta charset="utf-8">    
     <title>{{title}} {{#title}}&#8226;{{/title}} Async.fi</title>
-    <meta name="description" content="{{description}}{{^description}}Joni Kähärä Presents Async.fi{{/description}}" />    
-    <meta name="generator" content="https://github.com/kahara/Async.fi" />
-    <meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4" />
-    <meta name="viewport" content="width=device-width">
-    <link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/" />
-    <link rel="stylesheet" href="{{assetbase}}/asset/style.css" type="text/css" media="screen" />
+    <meta name="description" content="{{description}}{{^description}}Joni Kähärä Presents Async.fi{{/description}}">
+    <meta name="generator" content="https://github.com/kahara/Async.fi">
+    <meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4">
+    <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0">
+    <link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/">
+    <link rel="stylesheet" href="{{assetbase}}/asset/compact.css" type="text/css" media="screen and (max-width: 800px)">
+    <link rel="stylesheet" href="{{assetbase}}/asset/style.css" type="text/css" media="screen and (min-width: 801px)">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -29,41 +30,40 @@
 	</ul>
       </section>
       <nav>
-	<ul>
-	  <aside id="search" class="widget widget_search">
-	    <form id="cse-search-box" action="http://google.com/cse" style="margin-bottom: 0.65em;">
-	      <input type="hidden" name="cx" value="013195161865949220878:l1y-926apew" />
-	      <input type="hidden" name="ie" value="UTF-8" />
-	      <input type="text" name="q" size="23" />
-	      <input type="submit" name="sa" value="Search" />
-	    </form>
-	  </aside>
-	  <aside id="recent-posts" class="widget widget_recent_entries">
-	    <h3 class="widgettitle">Recent Posts</h3>
-	    <ul>
-	      {{recent}}
-	    </ul>
-	  </aside>
-	  <aside id="archives" class="widget widget_archive">
-	    <h3 class="widgettitle">Archives</h3>
-	    <ul>
-	      {{archives}}
-	    </ul>
-	  </aside>
-	  <aside id="categories" class="widget widget_categories">
-	    <h3 class="widgettitle">Categories</h3>
-	    <ul>
-	      {{categories}}
-	    </ul>
-	  </aside>
-	  <aside id="contact" class="widget widget_categories">
-	    <h3 class="widgettitle">Contact</h3>
-	    <ul>
-	      <li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li>
-	      <li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li>
-	      <li><a href="http://twitter.com/kahara">@kahara</a></li>
-	    </ul>
-	  </aside>
+	<aside id="search" class="widget widget_search">
+	  <form id="cse-search-box" action="http://google.com/cse" style="margin-bottom: 0.65em;">
+	    <input type="hidden" name="cx" value="013195161865949220878:l1y-926apew" />
+	    <input type="hidden" name="ie" value="UTF-8" />
+	    <input type="text" name="q" size="23" />
+	    <input type="submit" name="sa" value="Search" />
+	  </form>
+	</aside>
+	<aside id="recent-posts" class="widget widget_recent_entries">
+	  <h3 class="widgettitle">Recent Posts</h3>
+	  <ul>
+	    {{recent}}
+	  </ul>
+	</aside>
+	<aside id="archives" class="widget widget_archive">
+	  <h3 class="widgettitle">Archives</h3>
+	  <ul>
+	    {{archives}}
+	  </ul>
+	</aside>
+	<aside id="categories" class="widget widget_categories">
+	  <h3 class="widgettitle">Categories</h3>
+	  <ul>
+	    {{categories}}
+	  </ul>
+	</aside>
+	<aside id="contact" class="widget widget_categories">
+	  <h3 class="widgettitle">Contact</h3>
+	  <ul>
+	    <li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li>
+	    <li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li>
+	    <li><a href="http://twitter.com/kahara">@kahara</a></li>
+	  </ul>
+	</aside>
       </nav>
       <footer>
 	<p>

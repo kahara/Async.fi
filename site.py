@@ -34,7 +34,8 @@ except:
     
 
 datetimefmt_in = '%Y-%m-%d %H:%M:%S'
-datetimefmt_out = '%B %e, %Y'
+datetimefmt_formal = '%Y-%m-%dT%H:%M:%S+00:00'
+datetimefmt_pretty = '%B %e, %Y'
 
 bucketname = 'www.async.fi'
 base = 'http://www.async.fi'
@@ -140,7 +141,8 @@ for year in site['years']:
 site['posts'] = chunks([post['id'] for post in posts])
 
 for post in posts:
-    post['pretty_published'] = post['published'].strftime(datetimefmt_out)
+    post['formal_published'] = post['published'].strftime(datetimefmt_formal)
+    post['pretty_published'] = post['published'].strftime(datetimefmt_pretty)
     post['title'] = post['title'].replace('"', '')
 
 

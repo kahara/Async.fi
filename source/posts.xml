@@ -1232,16 +1232,15 @@ Note that CloudFront makes HTTP/1.0 requests and Apache may take some convincing
       <tag>scheduler</tag>
       <tag>ssd</tag>
     </tags>
-    <body><![CDATA[<ul>
-	<li>Do not use swap; this may be overly cautious these days as the drives have fancy wear-leveling schemes and whatnot implemented but still, if you're not tight on memory then it should not hurt. And if memory is an issue then in order to avoid performance problems perhaps you should upgrade it in the first place.</li>
-	<li>Do use the "noop" I/O scheduler, i.e.</li>
-<ul>
-	<li><code>apt-get install grub</code></li>
-	<li>add <code>GRUB_CMDLINE_LINUX="elevator=noop"</code> to <code>/etc/default/grub</code></li>
-	<li><code>update-grub</code></li>
-	<li>after boot,&#160;<code>/sys/block/sda/queue/scheduler</code> should read "<code>[noop] anticipatory deadline cfq</code>"</li>
-</ul>
-</ul>
+    <body><![CDATA[
+    <ul>
+    <li>Do not use swap; this may be overly cautious these days as the drives have fancy wear-leveling schemes and whatnot implemented but still, if you're not tight on memory then it should not hurt. And if memory is an issue then in order to avoid performance problems perhaps you should upgrade it in the first place.</li>
+    <li>Do use the "noop" I/O scheduler, i.e.</li>
+    <li><code>apt-get install grub</code></li>
+    <li>add <code>GRUB_CMDLINE_LINUX="elevator=noop"</code> to <code>/etc/default/grub</code></li>
+    <li><code>update-grub</code></li>
+    <li>after boot,&#160;<code>/sys/block/sda/queue/scheduler</code> should read "<code>[noop] anticipatory deadline cfq</code>"</li>
+    </ul>
 <div>That last part about the scheduler ensures that the default disk I/O scheduling, which rearranges reads and writes to boost IOPS for traditional cylindrical platters and is therefore just bad for SSD performance, is not used. With the "noop" scheduler, reads and writes happen in order.</div>]]></body>
   </post>
   <post>
@@ -1389,9 +1388,7 @@ if($_SERVER[&quot;REQUEST_METHOD&quot;] == &quot;POST&quot;) {
 }
 </pre>
 
-
-
-(Don't know if it's the <a href="http://aquoid.com/news/themes/suffusion/">Suffusion theme</a> or what that kill all the newlines from these listings. They're there, I can assure you, they're just not visible.)</pre>]]></body>
+<p>(Don't know if it's the <a href="http://aquoid.com/news/themes/suffusion/">Suffusion theme</a> or what that kill all the newlines from these listings. They're there, I can assure you, they're just not visible.)</p>]]></body>
   </post>
   <post>
     <published>2011-10-16 12:50:44</published>
@@ -1780,7 +1777,7 @@ And, after push/pull, at <em>test</em>:
 
 <p><a href="/media/2012/01/MikrotikOpenVPNTest1.png"><img class="aligncenter size-full wp-image-1035" title="Mikrotik OpenVPN Server Test" src="/media/2012/01/MikrotikOpenVPNTest1.png" alt="" width="975" height="398" /></a></p>
 
-<p>I am going to decribe how to:
+<p>I am going to decribe how to:</p>
 <ul>
 	<li>generate certificates to be used with OpenVPN</li>
 	<li>set up OpenVPN server on Mikrotik router</li>
@@ -1796,7 +1793,6 @@ A few things worth mentioning about Mikrotik OpenVPN server implementation (that
 	<li>only supports TCP mode, UDP is not supported</li>
 	<li>username/password pair is also required even though certificates are being used for authentication</li>
 </ul>
-</p>
 
 <h3>Generate certificates to be used with OpenVPN</h3>
 <pre>root@inhouse-debian:~# <strong>apt-get install openvpn</strong>
