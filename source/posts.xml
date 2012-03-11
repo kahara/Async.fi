@@ -1256,7 +1256,8 @@ Note that CloudFront makes HTTP/1.0 requests and Apache may take some convincing
       <tag>make</tag>
       <tag>openkinect</tag>
     </tags>
-    <body><![CDATA[This is old, from December 2010 it seems, but it's here in case the machine goes titsup. Quick, dirty and ugly but it works most of the time. First, the capture program:
+    <body><![CDATA[
+    <p>This is old, from December 2010 it seems, but it's here in case the machine goes titsup. Quick, dirty and ugly but it works most of the time. First, the capture program:</p>
 
 <pre>
 #include &lt;libusb-1.0/libusb.h&gt;
@@ -1294,7 +1295,7 @@ int main(int argc, char** argv)
 </pre>
 
 
-Makefile:
+<p>Makefile:</p>
 
 <pre>
 all:		capkinect
@@ -1310,7 +1311,7 @@ capkinect:	capkinect.o
 </pre>
 
 
-Uploader:
+<p>Uploader:</p>
 
 <pre>
 #!/bin/sh
@@ -1349,7 +1350,7 @@ while [ true ]; do
 done
 </pre>
 
-Server end script that inputs and outputs frames:
+<p>Server end script that inputs and outputs frames:</p>
 
 <pre>
 $latest_path = $_SERVER[&quot;DOCUMENT_ROOT&quot;] . &quot;/incoming/latest&quot;;
@@ -1453,7 +1454,8 @@ def S3UploadParams(bucket_name, object_name, expiry, maxsize, redirect):
       <tag>cdn</tag>
       <tag>cloudflare</tag>
     </tags>
-    <body><![CDATA[<a href="/media/2011/10/cloudflare-logo.png"><img class="alignleft size-full wp-image-952" title="cloudflare-logo" src="/media/2011/10/cloudflare-logo.png" alt="" width="305" height="50" /></a>
+    <body><![CDATA[
+    <p><a href="/media/2011/10/cloudflare-logo.png"><img class="alignleft size-full wp-image-952" title="cloudflare-logo" src="/media/2011/10/cloudflare-logo.png" alt="" width="305" height="50" /></a></p>
 
 <p>
 Enabled <a href="https://www.cloudflare.com/">CloudFlare</a> on this site, with nearly every optimization thing they offer. So far it's looking good, with an empty (browser) cache it takes a moment to load initial resources but after that subsequent page loads are <em>near-instantaneous</em> (click around to try this out). To get SSL properly working you have to get a Pro account. Recommended!
@@ -1475,7 +1477,8 @@ Enabled <a href="https://www.cloudflare.com/">CloudFlare</a> on this site, with 
       <tag>openssl</tag>
       <tag>sns</tag>
     </tags>
-    <body><![CDATA[<pre>
+    <body><![CDATA[
+    <pre>
 #!/bin/sh
 
 if [ $# -lt 3 ]; then
@@ -1516,7 +1519,8 @@ exit 1
       <tag>sqs</tag>
       <tag>tastypie</tag>
     </tags>
-    <body><![CDATA[Using <a href="https://www.djangoproject.com/">Django</a> and <a href="https://github.com/toastdriven/django-tastypie">Tastypie</a>, we automagically respond to <a href="http://aws.amazon.com/sns/">SNS</a> subscription requests. After that part is handled, the notification messages start coming in and those are used to trigger an <a href="http://aws.amazon.com/sqs/">SQS</a> polling cycle (trying to do a thorough job there which may seem like an overkill but it's not). A received SQS message is parsed and contents are passed to an external program that forks and exits which keeps the request from blocking.
+    <body><![CDATA[
+    <p>Using <a href="https://www.djangoproject.com/">Django</a> and <a href="https://github.com/toastdriven/django-tastypie">Tastypie</a>, we automagically respond to <a href="http://aws.amazon.com/sns/">SNS</a> subscription requests. After that part is handled, the notification messages start coming in and those are used to trigger an <a href="http://aws.amazon.com/sqs/">SQS</a> polling cycle (trying to do a thorough job there which may seem like an overkill but it's not). A received SQS message is parsed and contents are passed to an external program that forks and exits which keeps the request from blocking.</p>
 
 <pre>
 from django.conf import settings
@@ -1692,7 +1696,7 @@ class NotificationResource(Resource):
         return False
 </pre>
 
-That <code>process.py</code> would be something like:
+<p>That <code>process.py</code> would be something like:</p>
 
 <pre>
 #!/usr/bin/env python
@@ -1731,7 +1735,7 @@ syslog.syslog(sys.argv[0] + ': ' + str(m))
 # ...
 </pre>
 
-That is, <code>process.py</code> gets the received (and doped) SQS message, Base64 encoded, as it's only command line argument, forks, exits and does what it's supposed to do after that on its own. Control returns to <code>NotificationResource</code> so the request doesn't block unnecessarily.]]></body>
+<p>That is, <code>process.py</code> gets the received (and doped) SQS message, Base64 encoded, as it's only command line argument, forks, exits and does what it's supposed to do after that on its own. Control returns to <code>NotificationResource</code> so the request doesn't block unnecessarily.</p>]]></body>
   </post>
   <post>
     <published>2011-12-12 09:25:47</published>
@@ -1742,16 +1746,17 @@ That is, <code>process.py</code> gets the received (and doped) SQS message, Base
       <tag>django</tag>
       <tag>south</tag>
     </tags>
-    <body><![CDATA[Setup being along the&#160;<em>dev</em>&#160;&#8594; <em>test</em>&#160;&#8594; <em>prod</em>&#160;lines,&#160;to correctly manage database migrations we first set things up at&#160;<em>dev</em>:
+    <body><![CDATA[
+    <p>Setup being along the&#160;<em>dev</em>&#160;&#8594; <em>test</em>&#160;&#8594; <em>prod</em>&#160;lines,&#160;to correctly manage database migrations we first set things up at&#160;<em>dev</em>:</p>
 <pre>manage.py syncdb --noinput
 manage.py convert_to_south &lt;app&gt;
 manage.py createsuperuser</pre>
-At this point the South migrations are being pushed to repository and pulled in at&#160;<em>test</em>:
+<p>At this point the South migrations are being pushed to repository and pulled in at&#160;<em>test</em>:</p>
 <pre>manage.py syncdb --noinput
 manage.py migrate
 manage.py migrate &lt;app&gt; 0001 --fake
 manage.py createsuperuser</pre>
-Now, back at <em>dev</em>, after a change to one of the models:
+<p>Now, back at <em>dev</em>, after a change to one of the models:</p>
 <pre>manage.py schemamigration &lt;app&gt; --auto
 manage.py migrate &lt;app&gt;</pre>
 And, after push/pull, at <em>test</em>:

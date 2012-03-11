@@ -15,7 +15,7 @@ body, html {
 h1 { font-size: 250%; }
 h2 { font-size: 200%; }
 h3 { font-size: 150%; }
-h2, h3, h2 a, h3 a, p, header, footer, nav, aside, section, article, ul, ul li {
+h2, h3, h2 a, h3 a, p, pre, header, footer, nav, aside, section, article, ul, ul li, time {
     width: 100%;
     margin: 1em 0px 0.5em 0px;
     padding: 0px;
