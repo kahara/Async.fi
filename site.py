@@ -76,7 +76,7 @@ posts.sort(key = lambda post: post['published'], reverse=True)
 
 # http://stackoverflow.com/a/1751478
 def chunks(l):
-    return [l[i:i+10] for i in range(0, len(l), 10)]
+    return [l[i:i+5] for i in range(0, len(l), 5)]
 
 def getpost(postid):
     return filter(lambda post: post['id'] == postid, posts)[0]
