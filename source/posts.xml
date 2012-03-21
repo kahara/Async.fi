@@ -1455,7 +1455,7 @@ def S3UploadParams(bucket_name, object_name, expiry, maxsize, redirect):
       <tag>cloudflare</tag>
     </tags>
     <body><![CDATA[
-    <p><a href="/media/2011/10/cloudflare-logo.png"><img class="alignleft size-full wp-image-952" title="cloudflare-logo" src="/media/2011/10/cloudflare-logo.png" alt="" width="305" height="50" /></a></p>
+    <p><a href="/media/2011/10/cloudflare-logo.png"><img class="alignleft size-full" title="cloudflare-logo" src="/media/2011/10/cloudflare-logo.png" alt="" /></a></p>
 
 <p>
 Enabled <a href="https://www.cloudflare.com/">CloudFlare</a> on this site, with nearly every optimization thing they offer. So far it's looking good, with an empty (browser) cache it takes a moment to load initial resources but after that subsequent page loads are <em>near-instantaneous</em> (click around to try this out). To get SSL properly working you have to get a Pro account. Recommended!
@@ -1780,7 +1780,7 @@ And, after push/pull, at <em>test</em>:
     </tags>
     <body><![CDATA[<p>The purpose of this post is to describe, step by step, my attempt to set up an <a href="http://en.wikipedia.org/wiki/OpenVPN">OpenVPN</a> server on a <a href="http://routerboard.com/RB750">Mikrotik RouterBOARD 750</a> and create a working tunnel from an outside machine (<a href="http://aws.amazon.com/windows/">AWS EC2 Windows Server 2008 R2</a>) to this OpenVPN server so that an <a href="http://en.wikipedia.org/wiki/Samba_(software)">SMB server</a> on the local network can be accessed from said outside machine. The following diagram gives an overview of the setup:</p>
 
-<p><a href="/media/2012/01/MikrotikOpenVPNTest1.png"><img class="aligncenter size-full wp-image-1035" title="Mikrotik OpenVPN Server Test" src="/media/2012/01/MikrotikOpenVPNTest1.png" alt="" width="975" height="398" /></a></p>
+<p><a href="/media/2012/01/MikrotikOpenVPNTest1.png"><img class="alignleft size-full" title="Mikrotik OpenVPN Server Test" src="/media/2012/01/MikrotikOpenVPNTest1.png" alt="" /></a></p>
 
 <p>I am going to decribe how to:</p>
 <ul>
@@ -1866,7 +1866,7 @@ Of course in an IRL situation one should use a real password. Make sure you copi
 <pre>PS C:\Users\Administrator\Desktop&gt; <strong>openvpn.exe .\kahara.dyndns.org.ovpn</strong></pre>
 And here we have an EC2 client connected to a local SMB resource over the tunnel:
 
-<a href="/media/2012/01/ec2-46-137-68-14.eu-west-1.compute.amazonaws.com_.png"><img class="aligncenter size-full wp-image-1074" title="ec2-46-137-68-14.eu-west-1.compute.amazonaws.com" src="/media/2012/01/ec2-46-137-68-14.eu-west-1.compute.amazonaws.com_.png" alt="" width="1064" height="830" /></a>]]></body>
+<a href="/media/2012/01/ec2-46-137-68-14.eu-west-1.compute.amazonaws.com_.png"><img class="alignleft size-full" title="ec2-46-137-68-14.eu-west-1.compute.amazonaws.com" src="/media/2012/01/ec2-46-137-68-14.eu-west-1.compute.amazonaws.com_.png" alt="" /></a>]]></body>
   </post>
   <post>
     <published>2012-02-11 09:24:15</published>
@@ -1920,11 +1920,15 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     <body><![CDATA[
     <p>
     <strong>Update 2:</strong> Looks like page load times, at least as reported by Pingdom, went up from what they initially were. In my own testing cached pages still load in something like 150 to 250 milliseconds but Pingdom disagees. I don't know if this is regular CloudFront performance fluctuation, some kind of impedance mismatch between Pingdom and CloudFront or "something else".
-    <a href="/media/2012/03/Pingdom-2012-03-06.png"><img class="aligncenter size-full" title="Pingdom" src="/media/2012/03/Pingdom-2012-03-06.png" alt="" width="550" /></a>
+    </p>
+    <p>
+    <a href="/media/2012/03/Pingdom-2012-03-06.png"><img class="alignleft size-full" title="Pingdom" src="/media/2012/03/Pingdom-2012-03-06.png" alt="" /></a>
     </p>
     <p>
     <strong>Update:</strong> That really did the trick and the <a href="https://plus.google.com/112535968102790189432/posts/7trQ7LQdT36">estimated -90% page load time</a> wasn't that far off:
-    <a href="/media/2012/03/Pingdom-2012-03-04.png"><img class="aligncenter size-full" title="Pingdom" src="/media/2012/03/Pingdom-2012-03-04.png" alt="" width="550" /></a>
+    </p>
+    <p>
+    <a href="/media/2012/03/Pingdom-2012-03-04.png"><img class="alignleft size-full" title="Pingdom" src="/media/2012/03/Pingdom-2012-03-04.png" alt="" /></a>
     </p>
     <p>
     Having been fed up with wastefulness (resource wise) and general slowness of the MySQL/PHP/WordPress/CloudFlare setup for some time, I have now moved this site to S3/CloudFront. Site is generated from an XML file (which I derived from a WordPress export dump) with a Python script that is hosted <a href="https://github.com/kahara/Async.fi">here</a>. Commenting is obviously impossible but if you for some reason need to contact me you'll find contact details on your left.
