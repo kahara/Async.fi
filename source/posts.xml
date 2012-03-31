@@ -1936,5 +1936,55 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     ]]></body>
   </post>
   
+  <post>
+    <published>2012-03-31 06:55:00</published>
+    <slug>kettler-ergometer-serial-protocol</slug>
+    <title>Kettler ergometer serial protocol</title>
+    <category>note</category>
+    <tags>
+      <tag>kettler</tag>
+      <tag>ergometer</tag>
+      <tag>rs-232</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+    I'm having some issues getting <a href="http://trac.jergometer.org/">JErgometer</a> working with my new Kettler E3, so to rule out the possibility of miswiring (the bike has a traditional RS-232 interface so I got a <a href="http://www.ftdichip.com/Products/Cables/USBRS232.htm">USB-RS232-WE-5000-BT_0.0</a> cable from FTDI which comes "wire-ended" and requires some soldering) I dug out <a href="http://home.vianetworks.nl/users/mhwlng/kettler.lua">"Kettler Treadmill Serial lua class"</a> from <a href="http://home.vianetworks.nl/users/mhwlng/">mhwlng</a> (thanks!). This, and my own brute-force testing got me the following list of commands relevant in the bike's context, which may be only a subset of the commands that the bike accepts but what could be used to build one's own implementation:
+    </p>
+    
+    <dl>
+    <dt><code>RS</code></dt>
+    <dl>Reset device</dl>
+    
+    <dt><code>ID</code></dt>
+    <dl>Ergometer computer model info ("SF1B1706")</dl>
+    
+    <dt><code>VE</code></dt>
+    <dl>Ergormeter computer firmware version ("117")</dl>
+
+    <dt><code>ST</code></dt>
+    <dl>Request status; reply:<br><br>
+    <code>pulse rpm speed*10 xxx requested_power xxxx mm:ss actual_power</code><br>
+    </dl>
+    
+    <dt><code>CM</code></dt>
+    <dl>Enter command mode; required before calling the P-commands below</dl>
+    
+    <dt><code>PW x</code></dt>
+    <dl>Request power of x watts</dl>
+    
+    <dt><code>PT mmss</code></dt>
+    <dl>Request time of mmss</dl>
+    
+    <dt><code>PD x</code></dt>
+    <dl>Request x/10 km distance</dl>
+    
+    </dl>
+
+    <p>
+    Notes: I only connected RX, TX and signal ground (looks like the bike does not use any kind handshaking). Serial port settings are 9600bps, 8N1.
+    </p>    
+    ]]></body>
+  </post>
+  
 </posts>
 
