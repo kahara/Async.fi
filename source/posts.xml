@@ -1963,7 +1963,7 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
 
     <dt><code>ST</code></dt>
     <dl>Request status; reply:<br><br>
-    <code>pulse rpm speed*10 xxx requested_power xxxx mm:ss actual_power</code><br>
+    <code>pulse rpm speed*10 distance requested_power energy mm:ss actual_power</code><br>
     </dl>
     
     <dt><code>CM</code></dt>
@@ -1983,6 +1983,25 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     <p>
     Notes: I only connected RX, TX and signal ground (looks like the bike does not use any kind handshaking). Serial port settings are 9600bps, 8N1.
     </p>    
+    ]]></body>
+  </post>
+
+  <post>
+    <published>2012-04-14 12:00:00</published>
+    <slug>debugging-pyergometer</slug>
+    <title>Debugging pyergometer</title>
+    <category>note</category>
+    <tags>
+      <tag>kettler</tag>
+      <tag>ergometer</tag>
+      <tag>pyergometer</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+    <a href="https://github.com/kahara/pyergometer">pyergometer</a>
+    </p>
+    
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/static/modules/gviz/1.0/chart.js"> {"dataSourceUrl":"//docs.google.com/spreadsheet/tq?key=0AkGOC2pAlAfOdGZiWjI3Sk5ZRTlGTDFlaEk3TEp4YXc&transpose=0&headers=1&range=B1%3AE1201&gid=0&pub=1","options":{"series":{"3":{"lineWidth":1},"2":{"lineWidth":1},"1":{"lineWidth":1},"0":{"lineWidth":1}},"curveType":"","animation":{"duration":500},"theme":"maximized","lineWidth":2,"logScale":false,"hAxis":{"viewWindowMode":"pretty","viewWindow":{}},"vAxes":[{"viewWindowMode":"pretty","viewWindow":{}},{"viewWindowMode":"pretty","viewWindow":{}}],"title":"","booleanRole":"certainty","useFormatFromData":true,"legend":"in","focusTarget":"category","width":550,"height":350},"state":{},"view":{"columns":[{"calc":"emptyString","type":"string","sourceColumn":0},0,1,2,3]},"chartType":"LineChart","chartName":"Chart 1"} </script>    
     ]]></body>
   </post>
   
