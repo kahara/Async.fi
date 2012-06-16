@@ -325,6 +325,11 @@ open('./target/robots.txt', 'w').write(open('./source/robots.txt').read())
 open('./target/favicon.ico', 'w').write(open('./source/favicon.ico').read())
 
 
+# et cetera
+os.mkdir('./target/cv')
+open('./target/cv/index.html', 'w').write(open('./source/cv/index.html').read())
+
+
 if action == 'preview':
     import SimpleHTTPServer
     import SocketServer
