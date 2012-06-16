@@ -2001,11 +2001,30 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     <a href="https://github.com/kahara/pyergometer">pyergometer</a>
     </p>
     
-    <!--<script type="text/javascript" src="//ajax.googleapis.com/ajax/static/modules/gviz/1.0/chart.js"> {"dataSourceUrl":"//docs.google.com/spreadsheet/tq?key=0AkGOC2pAlAfOdGZiWjI3Sk5ZRTlGTDFlaEk3TEp4YXc&transpose=0&headers=1&range=B1%3AE1201&gid=0&pub=1","options":{"series":{"3":{"lineWidth":1},"2":{"lineWidth":1},"1":{"lineWidth":1},"0":{"lineWidth":1}},"curveType":"","animation":{"duration":500},"theme":"maximized","lineWidth":2,"logScale":false,"hAxis":{"viewWindowMode":"pretty","viewWindow":{}},"vAxes":[{"viewWindowMode":"pretty","viewWindow":{}},{"viewWindowMode":"pretty","viewWindow":{}}],"title":"","booleanRole":"certainty","useFormatFromData":true,"legend":"in","focusTarget":"category","width":550,"height":350},"state":{},"view":{"columns":[{"calc":"emptyString","type":"string","sourceColumn":0},0,1,2,3]},"chartType":"LineChart","chartName":"Chart 1"}</script>-->
-
     <!-- https://developers.google.com/chart/interactive/docs/gallery/annotatedtimeline#Configuration_Options -->
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/static/modules/gviz/1.0/chart.js"> {"dataSourceUrl":"//docs.google.com/spreadsheet/tq?key=0AkGOC2pAlAfOdFhNaWJWQnZDdjZyN1NHNGJOLXRFVUE&transpose=0&headers=1&range=A1%3AE1260&gid=0&pub=1","options":{"displayZoomButtons": false, "displayAnnotations":true,"vAxes":[{"title":null,"minValue":null,"viewWindowMode":"pretty","viewWindow":{"min":null,"max":null},"maxValue":null},{"viewWindowMode":"pretty","viewWindow":{}}],"useFormatFromData":true,"booleanRole":"certainty","wmode":"opaque","width":550,"height":350},"state":{},"chartType":"AnnotatedTimeLine","chartName":"Chart 1"} </script>
+    
+    <p>See also: <a href="http://ergometria.async.fi/">ergometria.async.fi</a></p>
+    
+    ]]></body>
+  </post>
 
+  <post>
+    <published>2012-05-20 17:00:00</published>
+    <slug>debian-nginx</slug>
+    <title>Debian/Nginx</title>
+    <category>note</category>
+    <tags>
+      <tag>nginx</tag>
+    </tags>
+    <body><![CDATA[
+    <pre>
+    # wget http://nginx.org/keys/nginx_signing.key
+    # apt-key add nginx_signing.key
+    # echo -ne "# http://wiki.nginx.org/Install\ndeb http://nginx.org/packages/debian/ squeeze nginx\ndeb-src http://nginx.org/packages/debian/ squeeze nginx\n" >>/etc/apt/sources.list
+    # apt-get update
+    # apt-get install nginx
+    </pre>
     ]]></body>
   </post>
   
