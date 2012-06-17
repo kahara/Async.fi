@@ -2027,6 +2027,28 @@ DBFILE="&lt;dir&gt;/<strong>dbname</strong>-`/bin/date +%s`.gz"
     </pre>
     ]]></body>
   </post>
+
+  <post>
+    <published>2012-06-18 00:00:00</published>
+    <slug>python-http-basic-authentication</slug>
+    <title>Python/HTTP Basic Authentication</title>
+    <category>note</category>
+    <tags>
+      <tag>python</tag>
+      <tag>http</tag>
+      <tag>urllib</tag>
+      <tag>httplib2</tag>
+    </tags>
+    <body><![CDATA[
+    <pre>
+    import urllib, httplib2, base64
+    
+    http = httplib2.Http()
+    auth = base64.encodestring(username + ':' + password)
+    response, content = http.request(url, 'GET', headers={ 'Authorization' : 'Basic ' + auth })
+    </pre>
+    ]]></body>
+  </post>
   
 </posts>
 
