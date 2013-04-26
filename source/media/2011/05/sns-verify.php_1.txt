@@ -55,7 +55,7 @@ function verify_sns($message, $region, $account, $topics)
         $text .= $msg->TopicArn . "\n";
         $text .= "Type\n";
         $text .= $msg->Type . "\n";
-    } elseif($msg->Type = 'SubscriptionConfirmation') {
+    } elseif($msg->Type == 'SubscriptionConfirmation') {
         $text .= "Message\n";
         $text .= $msg->Message . "\n";
         $text .= "MessageId\n";
