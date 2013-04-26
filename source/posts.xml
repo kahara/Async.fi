@@ -623,7 +623,14 @@ x264enc bitrate=100000 cabac=false pass=qual quantizer=27 &#187;
 subme=4 threads=0 bframes=0 dct8x8=false ! mux. | &#187;
 vlc -I "dummy" file/ts:///dev/stdin &#187;
 :sout='#std{access=http{mime=video/mp4},mux=ts,dst=192.168.1.35:8000}'
-</pre>]]></body>
+</pre>
+
+<p><strong>Update:</strong> Here's how to save the encoded video to an MPEG-4 file:</p>
+    
+<pre>
+gst-launch-0.10 -v videotestsrc num-buffers=900000 pattern=zone-plate kx2=20 ky2=20 kt=1 ! video/x-raw-yuv,width=1920,height=1080,framerate=25/1 ! x264enc bitrate=16000 cabac=false pass=qual quantizer=27 subme=4 threads=0 bframes=0 dct8x8=false ! queue ! muxer. ffmux_mp4 name=muxer ! filesink location=zone-plate-900000-frames-1920x1080-25fps.m4v
+</pre>
+]]></body>
   </post>
   <post>
     <published>2011-03-26 20:14:02</published>
@@ -2080,9 +2087,9 @@ var signature = b64_hmac_sha1(secret_key, string_to_sign) + '=';
 
 var url = key
     + '?AWSAccessKeyId=' + encodeURIComponent(access_key)
-    + '&Signature=' + encodeURIComponent(signature)
-    + '&Expires=' + expires
-    <strong>+ '&x-amz-security-token=' + encodeURIComponent(session_token);</strong>
+    + '&amp;Signature=' + encodeURIComponent(signature)
+    + '&amp;Expires=' + expires
+    <strong>+ '&amp;x-amz-security-token=' + encodeURIComponent(session_token);</strong>
     </pre>
     ]]></body>
   </post>
@@ -2101,18 +2108,17 @@ var url = key
     <p>Here are some bits of information that I think might be useful for others travelling to this destination.</p>
     
     <h3>Fonic prepaid</h3>
-
+    
     <p>I arranged, beforehand, two Fonic Prepaid SIMs from <a href="http://myworld.ebay.com/dragonxdragon">this guy</a>. Please note that while during the initial activation at <a href="http://fonic.de/">fonic.de</a> you can enter any German address in your details (I gave our rented apartment address) they will send a letter to that address and if the letter returns as non-deliverable (as happened in our case) then the prepaid will be put in “nur erreichbar” state. This means that you can receive calls and SMS, but can not place calls or send SMS or activate any of the flat rate Internet options. After contacting Fonic support, they asked for the original PIN numbers printed in SIM packaging, and also a copy (scan) of my Finnish passport. After this both SIMs were usable once again and I was able to activate the “Tagesflat” Internet option while in Germany.</p>
-
+    
     <p>In addition to top-up vouchers, transferring money to your prepaid account is possible with IBAN bank transfer; see instructions <a href="http://www.prepaid-wiki.de/index.php5?title=%C3%9Cberweisung_FONIC">here</a>.</p>
-
     
     <h3>7-Tage-Karte</h3>
 
     <p>These 7 day public transport tickets can be purchased from machines in S-Bahn/U-Bahn stations and bus/tram stops, or from a Spätkauf. As far as I know, the machines only accept cash. We got these for all zones (i.e. ABC which covers Berlin and some neighbouring towns) which cost a little over 30 euros per week.</p>
     
     <p>Berlin public transportation works excellently and we took a cab only occasionally (cab rides were reasonably priced too, though).</p>
-
+    
     <h3>Öffi Directions</h3>
     
     <p>This <a href="https://play.google.com/store/apps/details?id=de.schildbach.oeffi">Android app</a> will, given two stations (or addresses), present you with a selection of best routes using any mix of the above mentioned means of transportation, often in combinations you wouldn’t have thought of by just looking at the route maps and time tables. Can not be recommended enough.</p>
@@ -2146,6 +2152,183 @@ var url = key
     
     ]]></body>
   </post>
-  
-</posts>
 
+  <post>
+    <published>2012-11-21 20:00:00</published>
+    <slug>serving-per-iam-user-s3-data</slug>
+    <title>Serving per IAM user S3 data</title>
+    <category>snippet</category>
+    <tags>
+      <tag>aws</tag>
+      <tag>iam</tag>
+      <tag>s3</tag>
+    </tags>
+    <body><![CDATA[
+    
+    <p>
+    This isn't meant for public facing web, but a closed environment where it is necessary that each client is individually addressable (common application code, individual data). Each client has a local web server plus locally stored AWS credentials, and can therefore be fed content specific to each client. The bootstrap script is minimalistic by design, with as little moving parts as possible.
+    </p>
+
+    <p>
+    AWS credentials file (<code>init.json</code> below):
+    </p>
+    
+    <pre>
+    init({
+      "region": "eu-west-1",
+      "common_bucket": "loadres",
+      <strong>"private_bucket": "697ad820240c48929dce15c25cee8591",</strong>
+      "access_key": "AKIAILZCSDJEFUN3L53Q",
+      "secret_key": "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"
+    })
+    </pre>
+    
+    <p>
+    <code>index.html</code>:
+    </p>
+    
+    <pre>
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+      &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+        &lt;title&gt;loadres&lt;/title&gt;
+        &lt;script src="sha1.js"&gt;&lt;/script&gt; &lt;!-- https://github.com/lmorchard/S3Ajax/blob/master/js/sha1.js --&gt;
+        &lt;script&gt;
+
+          // the authenticated S3 URL maker function, without STS specific parts:
+          // http://www.async.fi/2012/07/s3-query-string-authentication-and-aws-security-token-service/
+          var s3url = function(region, bucket, key, access_key, secret_key) {
+            var expires = Math.floor(((new Date()).getTime()/1000) + 3600);
+            var string_to_sign = [
+              'GET\n\n\n',
+              expires, '\n',
+              '/', bucket, '/', key
+            ].join('');
+            var signature = b64_hmac_sha1(secret_key, string_to_sign) + '=';
+            var url = 'https://s3-' + region + '.amazonaws.com/' + bucket + '/' + key
+              + '?AWSAccessKeyId=' + encodeURIComponent(access_key)
+              + '&amp;Signature=' + encodeURIComponent(signature)
+              + '&amp;Expires=' + expires;
+            return url;
+          };
+
+          var init = function(settings) {
+            var head = document.getElementsByTagName('head')[0];
+
+            // inject prod.css
+            var css = document.createElement('link');
+            css.setAttribute('rel', 'stylesheet');
+            css.setAttribute('href', s3url(settings['region'], settings['common_bucket'], 'prod.css', settings['access_key'], settings['secret_key']));
+            head.appendChild(css);
+
+            // inject prod.js
+            var js = document.createElement('script');
+            js.setAttribute('src', s3url(settings['region'], settings['common_bucket'], 'prod.js', settings['access_key'], settings['secret_key']));
+            head.appendChild(js);
+          }
+        &lt;/script&gt;
+
+        &lt;!-- load AWS region and bucket info, plus credentials; this script calls init() (above) --&gt;
+        &lt;script src="init.json"&gt;&lt;/script&gt;
+      &lt;/head&gt;
+      &lt;body&gt;&lt;/body&gt;
+    &lt;/html&gt;
+    </pre>
+    
+    <p>
+    Now in the loaded <code>prod.js</code> file we would bring in the application code that would fetch data specific to this client (a little repetition here):
+    </p>
+    
+    <pre>
+    var expires = Math.floor(((new Date()).getTime()/1000) + 3600);
+    var string_to_sign = [
+      'GET\n\n\n',
+      expires, '\n',
+      '/', <strong>settings['private_bucket'],</strong> '/', 'data.txt'
+    ].join('');
+    var signature = b64_hmac_sha1(settings['secret_key'], string_to_sign) + '=';
+    var url = '/' + settings['private_bucket'] + '/' + 'data.txt'
+      + '?AWSAccessKeyId=' + encodeURIComponent(settings['access_key'])
+      + '&amp;Signature=' + encodeURIComponent(signature)
+      + '&amp;Expires=' + expires;
+
+    var r = new XMLHttpRequest();
+    r.open('GET', url, true);
+    r.onreadystatechange = function () {
+      if(r.readyState != 4 || r.status != 200) return;
+      alert("Success: " + r.responseText);
+    };
+    r.send();
+    </pre>
+
+    <p>
+    To make this work without <a href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a>, we're using a local proxy to handle S3 requests. In Nginx config:
+    </p>
+    
+    <pre>
+    location /697ad820240c48929dce15c25cee8591 {
+      rewrite  ^//697ad820240c48929dce15c25cee8591/(.*)$ /$1 break;
+      proxy_pass https://s3-eu-west-1.amazonaws.com/697ad820240c48929dce15c25cee8591;
+    }
+    </pre>
+    
+    ]]></body>
+  </post>
+
+  <post>
+    <published>2013-04-26 10:00:00</published>
+    <slug>amazon-dynamodb</slug>
+    <title>Amazon DynamoDB basics with Boto</title>
+    <category>snippet</category>
+    <tags>
+      <tag>aws</tag>
+      <tag>dynamodb</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+      The code assumes that <a href="https://github.com/boto/boto">Boto</a> credentials have been <a href="https://code.google.com/p/boto/wiki/BotoConfig">set up</a>.
+    </p>
+    <pre>
+      import boto.dynamodb
+      from boto.dynamodb.condition import *
+      
+      connection =  boto.dynamodb.connect_to_region('eu-west-1')
+      table = connection.get_table('table')
+      
+      id = '1'
+      timestamp = 1234
+      attrs = {
+        'key1': 'value1',
+        'key2': set(['value2', 'value3'])
+      }
+      
+      # create
+      item = table.new_item(hash_key=id, range_key=timestamp, attrs=attrs)
+      item.put()
+      
+      # read
+      item = table.get_item(hash_key=id)      
+      key2 = list(item['key2'])
+      
+      # update
+      item['key1'] = 'foo'
+      item['key3'] = 'bar'
+      item.put()
+      
+      # query
+      table.query(hash_key=id, range_key_condition=LT(1500))
+      
+      # scan
+      table.scan(scan_filter={'key1': EQ('foo')})
+      
+      # delete
+      item = table.get_item(hash_key=id)
+      item.delete()
+      
+    </pre>
+    
+    ]]></body>
+  </post>
+
+</posts>
