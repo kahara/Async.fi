@@ -2330,5 +2330,59 @@ var url = key
     
     ]]></body>
   </post>
+  
+  <post>
+    <published>2013-07-31 18:30:00</published>
+    <slug>autossh-with-ubuntu-upstart</slug>
+    <title>Autossh with Ubuntu Upstart</title>
+    <category>snippet</category>
+    <tags>
+      <tag>upstart</tag>
+      <tag>ssh</tag>
+      <tag>autossh</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+      Like the title says, the point of this post is getting <a href="http://www.harding.motd.ca/autossh/">autossh</a> up when Ubuntu boots. Place this in e.g. <code>/etc/init/autossh.conf</code>, after which you will be
+      able to says things like <code>sudo start autossh</code> and <code>sudo stop autossh</code>.
+    </p>
+
+    <pre>
+    description "autossh tunnel"
+    author "Joni Kähärä <joni.kahara@async.fi>"
+	
+    start on (local-filesystems and net-device-up IFACE=eth0 and net-device-up IFACE=eth1) # assuming we have multiple interfaces
+    stop on runlevel [016]
+	
+    respawn
+    respawn limit 5 60
+	
+    exec autossh -M 0 -N -R 10000:192.168.1.1:22 -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3" -o "StrictHostKeyChecking=no" -o "BatchMode=yes" -i /home/user/.ssh/id_rsa username@hostname
+    </pre>
+      
+      <p>
+	The “start on” line ensures that autossh won’t start before all network interfaces are up, and “stop on” will stop autossh (if it’s running) on runlevels 0, 1 and 6 (halt, single user and reboot, respectively). The “respawn limit” line will ensure that if autossh goes crazy, it will not be started again. Note that the plain “respawn” line is still needed to actually respawn the process.
+	
+	Of the command line options only the first one (-M 0) is for autossh, the rest are regular ssh options.
+	
+	<ul>
+	  <li>-M 0 denotes that autossh should not set up it’s own monitoring channel and should instead rely on ssh terminating itself when it decides that the connection’s been lost (see ServerAlive* options below).</li>
+	  <li>-N means “Do not execute a remote command”, i.e. just set up the connection and port forward.</li>
+	  <li>-R 10000:192.168.1.1:22 means that we want TCP port 10000 on the remote host forwarded to port 22 on local host (192.168.1.1).</li>
+	  <li>-o "ServerAliveInterval 60" send “keepalive” messages every 60 seconds</li>
+	  <li>-o "ServerAliveCountMax 3" terminate ssh if three consecutive ServerAliveInterval inquiries fail (and thus respawn)</li>
+	  <li>-o "StrictHostKeyChecking=no" don’t fail if remote server’s identity changed</li>
+	  <li>-o "BatchMode=yes" don’t attempt to use a passphrase if public key login fails</li>
+	  <li>-i /home/user/.ssh/id_rsa the private key we’ll use for the tunnel</li>
+	  <li>username@hostname connect to this host with this username</li>
+	</ul>
+      </p>
+      
+    ]]></body>
+  </post>
+
+
+
+
 
 </posts>
