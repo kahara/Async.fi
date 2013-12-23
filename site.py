@@ -333,10 +333,14 @@ open('./target/cv/index.html', 'w').write(open('./source/cv/index.html').read())
 if action == 'preview':
     import SimpleHTTPServer
     import SocketServer
+    
+    class PreviewServer(SocketServer.TCPServer):
+        allow_reuse_address = True
+    
     PORT = 8000
     Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
     os.chdir('./target')
-    httpd = SocketServer.TCPServer(("", PORT), Handler)
+    httpd = PreviewServer(('', PORT), Handler)
     print "previewing at port", PORT
     httpd.serve_forever()
 
