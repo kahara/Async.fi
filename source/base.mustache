@@ -6,71 +6,110 @@
     <meta name="description" content="{{description}}{{^description}}Joni Kähärä Presents Async.fi{{/description}}">
     <meta name="generator" content="https://github.com/kahara/Async.fi">
     <meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4">
-    <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/">
-    <link rel="stylesheet" href="{{assetbase}}/asset/compact.css" type="text/css" media="screen and (max-width: 800px)">
-    <link rel="stylesheet" href="{{assetbase}}/asset/style.css" type="text/css" media="screen and (min-width: 801px)">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.0.3/yeti/bootstrap.min.css" type="text/css">
     <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
     <![endif]-->
+    <style>
+      article * { max-width: 100%; }
+      article pre, article code, article embed { overflow-x: auto; word-wrap: normal; white-space: pre; }
+    </style>
   </head>
   <body>
+    <div class="container">
+      
+      <div class="row">
+	<div class="col-md-9 col-md-offset-3 page-header">
+	  <h1><a href="/">Async.fi</a></h1>
+	</div>
+      </div>
+      
+      <div class="row">	
+	<div class="col-lg-9 col-md-9 col-sm-8 col-xs-12 col-lg-push-3 col-md-push-3 col-sm-push-4">
+	  <section>
+	    {{#posts}}
+	    {{.}}
+	    {{/posts}}
+	    <ul class="pager">
+	      {{#next}}<li><a href="{{.}}" >&lt; Older Entries</a></li>{{/next}}
+	      {{#prev}}<li><a href="{{.}}" >Newer Entries &gt;</a></li>{{/prev}}
+	    </ul>
+	  </section>
+	</div>
+	
+	<div class="col-lg-3 col-md-3 col-sm-4 col-xs-12 col-lg-pull-9 col-md-pull-9 col-sm-pull-8">
+	  <nav>
+	    <div id="search">	      
+	      <form id="cse-search-box" action="http://google.com/cse" style="margin-bottom: 0.65em;">
+		<input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/>
+                <input type="hidden" name="ie" value="UTF-8"/>
+		<div class="input-group custom-search-form">
+		  <input type="text" class="form-control" name="q">
+		  <span class="input-group-btn">
+		    <button class="btn btn-default" type="submit" name="sa">
+		      <span class="glyphicon glyphicon-search"></span>
+		    </button>
+		  </span>
+		</div>
+		
+		<!--<input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/>
+		<input type="hidden" name="ie" value="UTF-8"/>
+		<input type="text" name="q" size="23"/>
+		<button type="submit" name="sa"/>-->
+		
+	      </form>
+	    </div>
+	    
+	    <div id="recent-posts">
+	      <h3>Recent Posts</h3>
+	      <ul>
+		{{recent}}
+	      </ul>
+	    </div>
+	    
+	    <div id="archives">
+	      <h3>Archives</h3>
+	      <ul>
+		{{archives}}
+	      </ul>
+	    </div>
+	    
+	    <div id="categories">
+	      <h3>Categories</h3>
+	      <ul>
+		{{categories}}
+	      </ul>
+	    </div>
+	    
+	    <div id="contact">
+	      <h3>Contact</h3>
+	      <ul>
+		<li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li>
+		<li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li>
+		<li><a href="https://twitter.com/kahara">@kahara</a></li>
+		<li><a href="https://github.com/kahara">github.com/kahara</a></li>
+	      </ul>
+	    </div>
+	    
+	  </nav>	
+	</div>
+	
+      </div>
+      
+      <div class="row">
+	<div class="col-md-9 col-lg-9 col-md-offset-3 col-lg-offset-3">
+	  <footer>
+	    <p class="text-center">
+	      &copy; 2013 Async.fi
+	    </p>
+	  </footer>
+	</div>
+      </div>
+      
+    </div> <!-- container -->
     <script>var _gaq=[['_setAccount','UA-20895288-1'],['_setDomainName', 'www.async.fi'],['_trackPageview']];(function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.src='//www.google-analytics.com/ga.js';s.parentNode.insertBefore(g,s)}(document,'script'))</script>
-    <div id="wrapper">
-      <header>
-	<h1><a href="/">Async.fi</a></h1>
-      </header>
-      <section>
-	{{#posts}}
-	{{.}}
-	{{/posts}}
-	<ul class="prevnext">
-	  {{#next}}<li><a href="{{.}}" >&lt; Older Entries</a></li>{{/next}}
-	  {{#prev}}<li><a href="{{.}}" >Newer Entries &gt;</a></li>{{/prev}}
-	</ul>
-      </section>
-      <nav>
-	<aside id="search" class="widget widget_search">
-	  <form id="cse-search-box" action="http://google.com/cse" style="margin-bottom: 0.65em;">
-	    <input type="hidden" name="cx" value="013195161865949220878:l1y-926apew" />
-	    <input type="hidden" name="ie" value="UTF-8" />
-	    <input type="text" name="q" size="23" />
-	    <input type="submit" name="sa" value="Search" />
-	  </form>
-	</aside>
-	<aside id="recent-posts" class="widget widget_recent_entries">
-	  <h3 class="widgettitle">Recent Posts</h3>
-	  <ul>
-	    {{recent}}
-	  </ul>
-	</aside>
-	<aside id="archives" class="widget widget_archive">
-	  <h3 class="widgettitle">Archives</h3>
-	  <ul>
-	    {{archives}}
-	  </ul>
-	</aside>
-	<aside id="categories" class="widget widget_categories">
-	  <h3 class="widgettitle">Categories</h3>
-	  <ul>
-	    {{categories}}
-	  </ul>
-	</aside>
-	<aside id="contact" class="widget widget_categories">
-	  <h3 class="widgettitle">Contact</h3>
-	  <ul>
-	    <li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li>
-	    <li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li>
-	    <li><a href="https://twitter.com/kahara">@kahara</a></li>
-	    <li><a href="https://github.com/kahara">github.com/kahara</a></li>
-	  </ul>
-	</aside>
-      </nav>
-      <footer>
-	<p>
-	  &copy; 2013 Async.fi
-	</p>
-      </footer>
-    </div>
   </body>
 </html>
