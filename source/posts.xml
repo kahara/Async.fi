@@ -2381,7 +2381,27 @@ var url = key
     ]]></body>
   </post>
 
-
+  <post>
+    <published>2013-12-29 20:45:00</published>
+    <slug>gone-digitalocean</slug>
+    <title>Gone DigitalOcean</title>
+    <category>note</category>
+    <tags>
+      <tag>aws</tag>
+      <tag>s3</tag>
+      <tag>digitalocean</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+      In order to try something new (and save money) I switched my personal "utility" server from <a href="http://aws.amazon.com/ec2/">EC2</a> to <a href="https://www.digitalocean.com/?refcode=974583c07178">DigitalOcean</a>. As I was running just a <a href="http://aws.amazon.com/ec2/instance-types/#instance-details">t1.micro instance</a> anyway, I selected DigitalOcean's cheapest offering, which costs <a href="https://www.digitalocean.com/pricing?refcode=974583c07178">$5/month</a> (512MB/20GB(SSD)/1TB). Plus $1/month for regular backups (they somehow backup the whole server while the server is running, so I'm not sure how consistent said backup can possibly be but at least it's cheap).
+    </p>
+    
+    <p>
+      DigitalOcean is offering just servers, and the whole experience isn't of course quite as polished as with Amazon. Nor can you, say, access <a href="http://aws.amazon.com/s3/">S3</a> (or <a href="http://aws.amazon.com/products/">other services</a>) at quite the same speed as when in Amazon's network. But for my use case it's a good fit.
+    </p>
+    
+    ]]></body>
+  </post>
 
 
 
