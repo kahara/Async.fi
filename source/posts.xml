@@ -2385,7 +2385,7 @@ var url = key
     <published>2013-12-29 20:45:00</published>
     <slug>gone-digitalocean</slug>
     <title>Gone DigitalOcean</title>
-    <category>note</category>
+    <category>meta</category>
     <tags>
       <tag>aws</tag>
       <tag>s3</tag>
@@ -2429,7 +2429,7 @@ iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
     </pre>
     
     <p>
-      <a href="http://en.wikipedia.org/wiki/Secure_Shell">SSH</a>; set port (<span style="font-weight: bold">XXXXX</span>) to 22 if you're running the default, which you perhaps should not as the script kiddies will not leave you alone. If this is changed to something non-default then <span style="font-weight: bold">do not forget</span> to change the port in <code>/etc/ssh/sshd_config</code> (the <code>Port</code> configuration directive) and <span style="font-weight: bold">do these changes</span> coordinatedly. Otherwise you will locked out.
+      <a href="http://en.wikipedia.org/wiki/Secure_Shell">SSH</a>; set port (<span style="font-weight: bold">XXXXX</span>) to 22 if you're running the default, which you perhaps should not do as the script kiddies will not leave you alone. If this is changed to something non-default then <span style="font-weight: bold">do not forget</span> to change the port in <code>/etc/ssh/sshd_config</code> (the <code>Port</code> configuration directive) and <span style="font-weight: bold">do these changes</span> coordinatedly. Otherwise you will be locked out.
     </p>
     <pre>
 iptables -A INPUT -p tcp -m tcp --dport <span style="font-weight: bold">XXXXX</span> -j ACCEPT
