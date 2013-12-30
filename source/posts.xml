@@ -2415,7 +2415,7 @@ var url = key
     </tags>
     <body><![CDATA[
     <p>
-      Accept anything coming in from <code>127.0.0.1</code>.
+      Accept anything coming in from <code>127.0.0.1</code>:
     </p>
     <pre>
 iptables -A INPUT -i lo -j ACCEPT
