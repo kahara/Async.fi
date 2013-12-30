@@ -2402,7 +2402,94 @@ var url = key
     
     ]]></body>
   </post>
-
-
-
+  
+  <post>
+    <published>2013-12-30 18:20:00</published>
+    <slug>basic-iptables-setup-ubuntu</slug>
+    <title>Basic iptables setup (Ubuntu)</title>
+    <category>note</category>
+    <tags>
+      <tag>linux</tag>
+      <tag>ubuntu</tag>
+      <tag>iptables</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+      Accept anything coming in from <code>127.0.0.1</code>.
+    </p>
+    <pre>
+iptables -A INPUT -i lo -j ACCEPT
+    </pre>
+    
+    <p>
+      Accept "related" (<span style="font-style: italic;">"packet is starting a new connection, but is associated with an existing connection"</span>) and "established" (<span style="font-style: italic;">"packet is associated with a connection which has seen packets in both directions"</span>) packets:
+    </p>
+    <pre>
+iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    </pre>
+    
+    <p>
+      <a href="http://en.wikipedia.org/wiki/Secure_Shell">SSH</a>; set port (<span style="font-weight: bold">XXXXX</span>) to 22 if you're running the default, which you perhaps should not as the script kiddies will not leave you alone. If this is changed to something non-default then <span style="font-weight: bold">do not forget</span> to change the port in <code>/etc/ssh/sshd_config</code> (the <code>Port</code> configuration directive) and <span style="font-weight: bold">do these changes</span> coordinatedly. Otherwise you will locked out.
+    </p>
+    <pre>
+iptables -A INPUT -p tcp -m tcp --dport <span style="font-weight: bold">XXXXX</span> -j ACCEPT
+    </pre>
+    
+    <p>
+      <a href="http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol">HTTP</a> and <a href="http://en.wikipedia.org/wiki/HTTP_Secure">HTTPS</a>:
+    </p>
+    <pre>
+iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+    </pre>
+    
+    <p>
+      <a href="http://en.wikipedia.org/wiki/Network_Time_Protocol">NTP</a>, because we're part of the <a href="http://www.pool.ntp.org/">NTP Pool Project</a>:
+    </p>
+    <pre>
+iptables -A INPUT -p udp -m udp --dport 123 -j ACCEPT
+    </pre>
+    
+    <p>
+      Log dropped packets, but not too much:
+    </p>
+    <pre>
+iptables -A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables DROP: " --log-level 7
+    </pre>
+    
+    <p>
+      Do the actual dropping:
+    </p>
+    <pre>
+iptables -A INPUT -j DROP
+    </pre>
+    
+    <p>
+      In order to save these settings on shutdown, create the following file in <code>/etc/network/if-post-down.d/iptables</code>:
+    </p>
+    <pre>
+#!/bin/sh
+iptables-save -c > /etc/iptables.rules
+exit 0
+    </pre>
+    
+    <p>
+      To restore the settings on boot, create the following file in <code>/etc/network/if-pre-up.d/iptables</code>:
+    </p>
+    <pre>
+#!/bin/sh
+iptables-restore < /etc/iptables.rules
+exit 0
+    </pre>
+    
+    <p>
+      And make the two executable:
+    </p>
+    <pre>
+chmod +x /etc/network/if-post-down.d/iptables /etc/network/if-pre-up.d/iptables
+    </pre>
+    
+    ]]></body>
+  </post>
+  
 </posts>
