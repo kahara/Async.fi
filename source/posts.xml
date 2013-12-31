@@ -2558,7 +2558,7 @@ application = django.core.handlers.wsgi.WSGIHandler()
     </tags>
     <body><![CDATA[
     <p>
-      Making things work took some effort, and a lot of copypasting from numerous sources, so I'm recording this here. To me, <a href="http://en.wikipedia.org/wiki/Simple_Network_Management_Protocol">SNMP</a> is a black art.
+      It's a mess, but making things work took some effort, and a lot of copypasting from numerous sources, so I'm recording this here.
     </p>
     
     <p>
