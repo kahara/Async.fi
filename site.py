@@ -154,6 +154,7 @@ list_tmpl = loader.load_template('list', 'source', 'utf-8')
 monthnames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 recent = pystache.render(list_tmpl, { 'items': [{ 'link': post['link'], 'title': post['title']  } for post in posts[:5]] }).encode('utf-8')
+
 archives = []
 
 years = []
@@ -174,7 +175,12 @@ for year in years:
                 'title': '%s %04d' % (monthnames[month], year),
                 'count': '%s' % count
                 })
+
+archives = sorted(archives, key=lambda a: a['link'])
+archives.reverse()
+
 archives = pystache.render(list_tmpl, { 'items': archives } ).encode('utf-8')
+
 categories = pystache.render(list_tmpl, { 'items': [{ 'link': '/category/%s/' % (category, ), 'title': category } for category in site['categories']] }).encode('utf-8')
 
 baseattrs = {
