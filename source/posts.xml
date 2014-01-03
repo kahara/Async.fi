@@ -2683,5 +2683,24 @@ Options[localhost.tcpnewconns]: growright,nopercent,perminute
     </pre>
     ]]></body>
   </post>
+
+  <post>
+    <published>2014-01-03 13:45:00</published>
+    <slug>django-and-docker-a-marriage-made-in-heaven</slug>
+    <title>Django and Docker: a Marriage Made in Heaven</title>
+    <category>shoutout</category>
+    <tags>
+      <tag>docker</tag>
+      <tag>django</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+      Not especially Django-specific, but good info nevertheless:
+    </p>
+    
+    <iframe width="480" height="360" src="//www.youtube.com/embed/_Q9YlJV-wgQ?html5=1" frameborder="0" allowfullscreen></iframe>
+    
+    ]]></body>
+  </post>
     
 </posts>
