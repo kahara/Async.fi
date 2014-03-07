@@ -39,8 +39,8 @@ datetimefmt_pretty = '%B %e, %Y'
 
 bucketname = 'www.async.fi'
 base = 'http://www.async.fi'
-mediabase = 'http://media.async.fi'
-assetbase = 'http://asset.async.fi'
+#mediabase = 'http://media.async.fi'
+#assetbase = 'http://asset.async.fi'
 
 cf_distribution = 'E1556WXIQRXJQ9'
 
@@ -69,7 +69,8 @@ for post in etree.parse('./source/posts.xml').getroot().xpath('post'):
             'tags': [tag.text for tag in post.xpath('tags')[0]],
             'slug': post.xpath('slug')[0].text,
             'title': cgi.escape(post.xpath('title')[0].text),
-            'body': post.xpath('body')[0].text.replace('href="/media/', 'href="%s/media/' % (mediabase, )).replace('src="/media/', 'src="%s/media/' % (mediabase, )) if action == 'deploy' else post.xpath('body')[0].text,
+            'body': post.xpath('body')[0].text,
+            #'body': post.xpath('body')[0].text.replace('href="/media/', 'href="%s/media/' % (mediabase, )).replace('src="/media/', 'src="%s/media/' % (mediabase, )) if action == 'deploy' else post.xpath('body')[0].text,
             })
 posts.sort(key = lambda post: post['published'], reverse=True)
 
@@ -182,7 +183,7 @@ archives = pystache.render(list_tmpl, { 'items': archives } ).encode('utf-8')
 categories = pystache.render(list_tmpl, { 'items': [{ 'link': '/category/%s/' % (category, ), 'title': category } for category in site['categories']] }).encode('utf-8')
 
 baseattrs = {
-    'assetbase': assetbase if action == 'deploy' else None,
+    #'assetbase': assetbase if action == 'deploy' else None,
     'recent': recent,
     'archives': archives,
     'categories': categories
@@ -300,7 +301,8 @@ attrs = {
             'category': post['category'],
             'tags': post['tags'],
             'description': ' '.join(''.join([e for e in BeautifulSoup(post['body']).recursiveChildGenerator() if isinstance(e,unicode)]).split(' ')[:23]),
-            'content': post['body'].replace('href="/media/', 'href="%s/media/' % (base, )).replace('src="/media/', 'src="%s/media/' % (base, )),
+            'content': post['body'],
+            #'content': post['body'].replace('href="/media/', 'href="%s/media/' % (base, )).replace('src="/media/', 'src="%s/media/' % (base, )),
             } for post in posts]
 }
 open('./target/feed/index.html', 'w').write(pystache.render(feed_tmpl, attrs).encode('utf-8'))
