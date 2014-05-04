@@ -58,3 +58,8 @@ Tastypie
 Django
 Boto
 XenServer
+Docker
+Node
+Koa
+AngularJS
+Salt
