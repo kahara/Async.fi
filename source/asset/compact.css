@@ -1,0 +1,77 @@
+header,footer,section,aside,nav,article {
+    display: block;
+}
+* { border: none; margin: 0px; padding: 0px; }
+body, html {
+    font-family: "Helvetica Neue",Helvetica,arial,sans-serif;
+    color: #444;
+    background-color: #fff;
+    font-size: 100%;
+    padding: 0.25em;
+}
+#wrapper {
+    width: 100%;
+}
+h1 { font-size: 250%; }
+h2 { font-size: 200%; }
+h3 { font-size: 150%; }
+h2, h3, h2 a, h3 a, p, pre, header, footer, nav, aside, section, article, ul, ul li, time {
+    width: 100%;
+    margin: 1em 0px 0.5em 0px;
+    padding: 0px;
+    word-wrap: break-word;
+    clear: both;
+    float: none;
+}
+a, a:link, a:visited, a:hover {
+    color: #444;
+    text-decoration: none;
+}
+p a, p a:link, p a:visited, p a:hover {
+    font-weight: normal;
+    text-decoration: underline;
+}
+p.tags a, p.categories a, p.tags a:link, p.categories a:link, p.tags a:visited, p.categories a:visited, p.tags a:hover, p.categories a:hover {
+    font-weight: normal;
+    text-decoration: underline;
+}
+img {
+    margin: 1em 0px 0.5em 0px;
+    padding: 0px;
+    clear: both;
+    float: none;
+}
+ul {
+    list-style-position: inside;
+}
+pre {
+    word-wrap: normal;
+}
+hr {
+    display: none;
+}
+input {
+    border: solid 1px #444;
+    padding: 0.25em;
+}
+.prevnext {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+    font-size: 12px;
+    border-bottom: 1px dashed #ccc;
+    padding: 0 0 30px 0;
+    margin: 0 0 30px 0;
+}
+.prevnext a {
+    color: #999;
+    text-decoration: none;
+}
+.prevnext a:hover {
+    color: #444;
+}
+.prevnext li {
+    display: inline;
+    padding: 10px;
+}
