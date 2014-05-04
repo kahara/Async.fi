@@ -5,3 +5,4 @@ target/
 proof/
 .DS_Store
 env/
+build/
