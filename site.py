@@ -343,7 +343,7 @@ if action == 'preview':
     class PreviewServer(SocketServer.TCPServer):
         allow_reuse_address = True
     
-    PORT = 8000
+    PORT = 8080
     Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
     os.chdir('./target')
     httpd = PreviewServer(('', PORT), Handler)
