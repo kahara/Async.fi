@@ -2702,5 +2702,148 @@ Options[localhost.tcpnewconns]: growright,nopercent,perminute
     
     ]]></body>
   </post>
+
+  <post>
+    <published>2014-06-03 18:00:00</published>
+    <slug>salt-notes</slug>
+    <title>Salt Notes</title>
+    <category>note</category>
+    <tags>
+      <tag>salt</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+    I decided to go for <a href="http://salt-cloud.readthedocs.org/en/latest/">Salt</a> when picking
+    a solution that would help me automate server management. Here are some things that required some figuring out.
+    </p>
+    
+    <h3>Including keys in pillar data</h3>
+    
+    <p>
+    Using Git as an example; deploy key is set in Github repo's settings:
+    </p>
+    
+    <pre>
+sites:
+  example.com:
+    gitsource: git+ssh://git@github.com/you/your_repo.git
+    gitidentity: |
+      -----BEGIN RSA PRIVATE KEY-----
+      &lt;Deploy key goes here – mind the indentation!&gt;
+      -----END RSA PRIVATE KEY-----
+    </pre>
+    
+    <p>
+    Using the above in states:
+    </p>
+    
+    <pre>
+{% if 'gitsource' in args and 'gitidentity' in args %}
+/etc/deploy-keys/&#123;&#123; site &#125;&#125;:
+  file.directory:
+    - makedirs: True
+    - require:
+      - pkg: nginx
+    - watch_in:
+      - service: nginx
+
+/etc/deploy-keys/&#123;&#123; site &#125;&#125;/identity:
+  file.managed:
+    - mode: 600
+    <strong>- contents_pillar: sites:&#123;&#123; site &#125;&#125;:gitidentity</strong>
+    - require:
+      - pkg: nginx
+    - watch_in:
+      - service: nginx
+
+&#123;&#123; args.gitsource &#125;&#125;:
+  git.latest:
+    - identity: /etc/deploy-keys/&#123;&#123; site &#125;&#125;/identity
+    - target: /var/www/&#123;&#123; site &#125;&#125;
+    - rev: master
+    - force: True
+    - require:
+      - pkg: nginx
+    - watch_in:
+      - service: nginx
+{% endif %}
+    </pre>
+    
+    <h3>Swap</h3>
+    <p>
+    Using a swap file here because <a href="https://www.digitalocean.com/?refcode=974583c07178">DigitalOcean</a> instances,
+    at least the small ones that I've tested, don't include any swap.
+    </p>
+    <pre>
+/swapfile:
+  cmd.run:
+    - name: "fallocate -l 1024M /swapfile && chmod 600 /swapfile && mkswap /swapfile"
+    - unless: test -f /swapfile
+  mount.swap:
+    - require:
+      - cmd: /swapfile
+    </pre>
+    
+    <h3>Logentries</h3>
+    <p>
+    The <a href="https://logentries.com/doc/agent/">"agent"</a> of the excellent <a href="https://logentries.com/">Logentries</a> log gathering service doesn't use a config file,
+    and instead relies on the <a href="https://github.com/logentries/le">le</a> tool that is used to set thing up. After config changes,
+    the Logentries daemon must be restarted (that last restart part can likely be streamlined but I couldn't get a hard service restart to work otherwise).
+    </p>
+    
+    <pre>
+logentries:
+  pkgrepo.managed:
+    - name: deb http://rep.logentries.com/ trusty main
+    - dist: trusty
+    - file: /etc/apt/sources.list.d/logentries.list
+    - keyid: C43C79AD
+    - keyserver: pgp.mit.edu
+  pkg:
+    - latest
+
+logentries_registered:
+  cmd.run:
+    - unless: le whoami
+    - name: le register --force --account-key=&#123;&#123; pillar['logentries']['account_key'] &#125;&#125; --hostname=&#123;&#123; grains.id &#125;&#125; --name=&#123;&#123; grains.id &#125;&#125;-`date +'%Y-%m-%dT%H:%M:%S'`
+    - require:
+      - pkg: logentries
+    - require_in:
+      - pkg: logentries-daemon
+
+logentries_follow:
+  cmd.run:
+    - name: |
+        le follow /var/log/syslog
+        le follow /var/log/auth.log
+        le follow /var/log/salt/minion
+{% for site, args in pillar.get('sites', {}).items() %}
+        le follow /var/log/nginx/&#123;&#123; site &#125;&#125;.access.log
+        le follow /var/log/nginx/&#123;&#123; site &#125;&#125;.error.log
+{% endfor %}
+    - require:
+      - pkg: logentries
+    - require_in:
+      - pkg: logentries-daemon
+
+logentries-daemon:
+  pkg:
+    - latest
+
+logentries_daemon_stop:
+  service.dead:
+    - name: logentries
+    - require:
+      - pkg: logentries-daemon
+    - require_in:
+      - logentries_daemon_start
+
+logentries_daemon_start:
+  service.running:
+    - name: logentries
+    </pre>
+        
+    ]]></body>
+  </post>
     
 </posts>
