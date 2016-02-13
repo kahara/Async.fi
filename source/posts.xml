@@ -2848,8 +2848,8 @@ logentries_daemon_start:
 
   <post>
     <published>2016-01-17 14:45:00</published>
-    <slug>oh2ewl</slug>
     <title>OH2EWL</title>
+    <slug>oh2ewl</slug>
     <category>meta</category>
     <tags>
       <tag>amateur-radio</tag>
@@ -2862,5 +2862,138 @@ logentries_daemon_start:
 
     ]]></body>
   </post>
-    
+
+  <post>
+    <published>2016-02-12 20:00:00</published>
+    <title>Building virtual machines with vmbuilder</title>
+    <slug>building-virtual-machines-with-vmbuilder</slug>
+    <category>snippet</category>
+    <tags>
+      <tag>virtualization</tag>
+      <tag>kvm</tag>
+      <tag>qemu</tag>
+      <tag>vmbuilder</tag>
+      <tag>apt-cacher</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+    After installing <code>qemu-kvm</code>, <code>libvirt-bin</code>, <code>bridge-utils</code>
+    and <code>ubuntu-vm-builder</code>, set up a bridge that virtual machines can attach to:
+    </p>
+    <pre>
+auto lo
+iface lo inet loopback
+
+auto enp2s0
+iface enp2s0 inet manual
+
+auto br0
+iface br0 inet static
+      address 192.168.0.8
+      netmask 255.255.255.0
+      gateway 192.168.0.1
+      nameserver 127.0.0.1
+      bridge_ports enp2s0
+      bridge_stp off
+      bridge_fd 0
+      bridge_maxwait 0</pre>
+
+    <p>
+    Then <code>/etc/init.d/networking restart</code>.
+    </p>
+    <p>
+    Install <code>apt-cacher</code> and give it the following config
+    in <code>/etc/apt-cacher/apt-cacher.conf</code>:
+    </p>
+    <pre>
+group = www-data
+user = www-data
+daemon_addr = 192.168.0.8
+path_map = ubuntu archive.ubuntu.com/ubuntu
+allowed_hosts = 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+ubuntu_release_names = trusty</pre>
+
+    <p>
+    The vm build script, using the local cache:
+    </p>
+    <pre>
+#!/bin/sh
+
+if [ $# -lt 2 ]; then
+    echo "usage: HOSTNAME IP"
+    exit 1
+else
+    HOSTNAME=$1
+    IP=$2
+fi
+
+firstboot=`mktemp`
+echo "#!/bin/bash" >$firstboot
+echo "rm -f /etc/resolvconf/resolv.conf.d/{original,base,head,tail}" >$firstboot
+chmod +x $firstboot
+
+fallocate -l 32768M $HOME/vms/$HOSTNAME-rootdisk
+
+vmbuilder kvm ubuntu \
+          --suite trusty \
+          --verbose \
+          --libvirt qemu:///system \
+          --destdir $HOME/vms/$HOSTNAME/ \
+          --install-mirror http://192.168.0.8:3142/ubuntu \
+          --mirror http://192.168.0.8:3142/ubuntu \
+          --raw $HOME/vms/$HOSTNAME-rootdisk \
+          --rootsize 32768 \
+          --swapsize 0 \
+          --mem 1024 \
+          --cpus 1 \
+          --hostname $HOSTNAME \
+          --bridge br0 \
+          --ip $IP\
+          --mask 255.255.255.0 \
+          --gw 192.168.0.1 \
+          --dns 192.168.0.8 \
+          --lang en_US.UTF-8 \
+          --timezone UTC \
+          --user ubuntu \
+          --name Ubuntu \
+          --pass ubuntu \
+          --ssh-user-key $HOME/.ssh/id_rsa.pub \
+          --addpkg linux-image-generic \
+          --addpkg openssh-server \
+          --addpkg sudo \
+          --firstboot $firstboot
+
+rm $firstboot
+rmdir $HOME/vms/$HOSTNAME/
+
+virsh autostart$HOSTNAME
+virsh start $HOSTNAME</pre>
+
+<p>
+<strong>Edit:</strong> To inspect and edit the virtual machine disk image, use
+<a href="http://libguestfs.org/guestfish.1.html">guestfish</a>,
+part of the
+<a href="http://libguestfs.org/">libguestfs project</a>:
+</p>
+
+<pre>
+$ sudo apt-get install libguestfs-tools
+$ guestfish --rw --add testserver-rootdisk
+
+Welcome to guestfish, the guest filesystem shell for
+editing virtual machine filesystems and disk images.
+
+Type: 'help' for help on commands
+      'man' to read the manual
+      'quit' to quit the shell
+
+&gt;&lt;fs&gt; run
+100% ⟦▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒⟧ 00:00
+&gt;&lt;fs&gt; list-filesystems
+/dev/sda1: ext4
+&gt;&lt;fs&gt; mount /dev/sda1 /
+&gt;&lt;fs&gt; emacs /etc/resolv.conf
+&gt;&lt;fs&gt; exit</pre>
+    ]]></body>
+  </post>
 </posts>
