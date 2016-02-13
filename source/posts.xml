@@ -2994,6 +2994,14 @@ Type: 'help' for help on commands
 &gt;&lt;fs&gt; mount /dev/sda1 /
 &gt;&lt;fs&gt; emacs /etc/resolv.conf
 &gt;&lt;fs&gt; exit</pre>
+
+<p>
+<strong>Edit:</strong> Disk image pre-allocation can be done with
+QEMU-provided tools, which may or may not be a more kosher approach.
+Must investigate.
+</p>
+<pre>
+qemu-img create -f qcow2 -o preallocation=falloc $HOME/vms/$HOSTNAME-rootdisk 32768M</pre>
     ]]></body>
   </post>
 </posts>
