@@ -2928,46 +2928,48 @@ else
 fi
 
 firstboot=`mktemp`
-echo "#!/bin/bash" >$firstboot
-echo "rm -f /etc/resolvconf/resolv.conf.d/{original,base,head,tail}" >$firstboot
+echo "#!/bin/bash" >>$firstboot
+echo "rm -f /etc/resolvconf/resolv.conf.d/{original,base,head,tail}" >>$firstboot
+echo "reboot" >>$firstboot
 chmod +x $firstboot
 
-fallocate -l 32768M $HOME/vms/$HOSTNAME-rootdisk
+qemu-img create -f qcow2 -o preallocation=falloc $HOME/vms/$HOSTNAME-rootdisk 4096M
 
 vmbuilder kvm ubuntu \
-          --suite trusty \
-          --verbose \
-          --libvirt qemu:///system \
-          --destdir $HOME/vms/$HOSTNAME/ \
-          --install-mirror http://192.168.0.8:3142/ubuntu \
-          --mirror http://192.168.0.8:3142/ubuntu \
-          --raw $HOME/vms/$HOSTNAME-rootdisk \
-          --rootsize 32768 \
-          --swapsize 0 \
-          --mem 1024 \
-          --cpus 1 \
-          --hostname $HOSTNAME \
-          --bridge br0 \
-          --ip $IP\
-          --mask 255.255.255.0 \
-          --gw 192.168.0.1 \
-          --dns 192.168.0.8 \
-          --lang en_US.UTF-8 \
-          --timezone UTC \
-          --user ubuntu \
-          --name Ubuntu \
-          --pass ubuntu \
-          --ssh-user-key $HOME/.ssh/id_rsa.pub \
-          --addpkg linux-image-generic \
-          --addpkg openssh-server \
-          --addpkg sudo \
-          --firstboot $firstboot
+  --suite trusty \
+  --verbose \
+  --libvirt qemu:///system \
+  --destdir $HOME/vms/$HOSTNAME/ \
+  --install-mirror http://192.168.0.8:3142/ubuntu \
+  --mirror http://192.168.0.8:3142/ubuntu \
+  --raw $HOME/vms/$HOSTNAME-rootdisk \
+  --rootsize 4096 \
+  --swapsize 0 \
+  --mem 128 \
+  --cpus 1 \
+  --hostname $HOSTNAME \
+  --bridge br0 \
+  --ip $IP\
+  --mask 255.255.255.0 \
+  --gw 192.168.0.1 \
+  --dns 192.168.0.8 \
+  --lang en_US.UTF-8 \
+  --timezone UTC \
+  --user ubuntu \
+  --name Ubuntu \
+  --pass ubuntu \
+  --ssh-user-key $HOME/.ssh/id_rsa.pub \
+  --addpkg linux-image-generic \
+  --addpkg openssh-server \
+  --addpkg sudo \
+  --firstboot $firstboot
 
 rm $firstboot
 rmdir $HOME/vms/$HOSTNAME/
 
-virsh autostart$HOSTNAME
-virsh start $HOSTNAME</pre>
+virsh autostart $HOSTNAME
+virsh start $HOSTNAME
+</pre>
 
 <p>
 <strong>Edit:</strong> To inspect and edit the virtual machine disk image, use
@@ -3002,6 +3004,10 @@ Must investigate.
 </p>
 <pre>
 qemu-img create -f qcow2 -o preallocation=falloc $HOME/vms/$HOSTNAME-rootdisk 32768M</pre>
+
+<p>
+<strong>Edit:</strong> Fix nameserver enforcement in build script.
+</p>
     ]]></body>
   </post>
 </posts>
