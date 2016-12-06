@@ -1139,16 +1139,16 @@ window.Root = Backbone.Model.extend({
 </p>
 
 <pre>
-var attrs = Backbone.Model.prototype.parse.call(this, data);
+var attrs = Backbone.Model.prototype.parse.apply(this, data);
 if(!attrs) return;
 </pre>
     
 <p>
-<strong>Update:</strong> My Javascript-Fu is weak which made me not see the obvious. As suggested in <a href="http://documentcloud.github.com/backbone/#Model-extend">Backbone.js documentation</a>, you can call the parent's implementation like this:
+<strong>Update:</strong> My Javascript-Fu is weak which made me not see the obvious. As suggested in <a href="http://backbonejs.org/#Model-extend">Backbone.js documentation</a>, you can call the parent's implementation like this:
 </p>
 
 <pre>
-Backbone.Model.prototype.method.call(this, args);
+Backbone.Model.prototype.method.apply(this, args);
 </pre>
 
 <p>
@@ -1156,7 +1156,7 @@ So, instead of unnecessarily copypasting behavior from <a href="https://github.c
 </p>
 
 <pre>
-var attrs = Backbone.Model.prototype.parse.call(this, data);
+var attrs = Backbone.Model.prototype.parse.apply(this, data);
 </pre>
 
 <p>
