@@ -1,1 +1,2 @@
 libxslt-dev
+python-lxml
