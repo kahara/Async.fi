@@ -39,17 +39,14 @@ datetimefmt_pretty = '%B %e, %Y'
 
 bucketname = 'www.async.fi'
 base = 'http://www.async.fi'
-#mediabase = 'http://media.async.fi'
-#assetbase = 'http://asset.async.fi'
 
 cf_distribution = 'E1556WXIQRXJQ9'
-
 
 posts = []  # individual posts, sorted form newest to oldest; items below refer to post's 'id's
 site = {
     'posts': [],       # same list as above, cut into chunks of ten
     'categories': {},  # key is a category, contains a list of post ids (chunked)
-    'tags': {},        # key is a tag, contains a list of post ids (cunked)
+    'tags': {},        # key is a tag, contains a list of post ids (chunked)
     'years': {},       # each year contains a dict of n months; each month contains a list of n posts (chunked)    
     }
 
@@ -343,7 +340,7 @@ if action == 'preview':
     class PreviewServer(SocketServer.TCPServer):
         allow_reuse_address = True
     
-    PORT = 8080
+    PORT = 8000
     Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
     os.chdir('./target')
     httpd = PreviewServer(('', PORT), Handler)
@@ -352,8 +349,8 @@ if action == 'preview':
 
     
 elif action == 'deploy':
-    connection = boto.connect_s3()
-    bucket = Bucket(connection, bucketname)    
+    connection = boto.s3.connect_to_region('eu-west-1')
+    bucket = Bucket(connection, bucketname)
     for filename in dirwalk('./target/'):
         target = filename.replace('./target', '')
         k = Key(bucket)
