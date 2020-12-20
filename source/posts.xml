@@ -3010,4 +3010,182 @@ qemu-img create -f qcow2 -o preallocation=falloc $HOME/vms/$HOSTNAME-rootdisk 32
 </p>
     ]]></body>
   </post>
+
+  <post>
+    <published>2020-12-20 20:00:00</published>
+    <title>WireGuard Notes</title>
+    <slug>wireguard-notes</slug>
+    <category>note</category>
+    <tags>
+      <tag>wireguard</tag>
+      <tag>routing</tag>
+    </tags>
+    <body><![CDATA[
+    <p>
+    After being first exposed to <a href="https://en.wikipedia.org/wiki/WireGuard">WireGuard</a>, it took a while
+    before its simple-yet-powerful nature started to dawn on me. By "simple" I mean simple from an end-user's
+    perspective; the implementation, while supposedly a few orders of magnitude less hairy than e.g.
+    <a href="https://en.wikipedia.org/wiki/OpenVPN">OpenVPN</a> or <a href="https://en.wikipedia.org/wiki/IPsec">IPsec</a>,
+    isn't something that I can claim to have grasped. But the ascetic, no bells and whistles, do one thing well
+    approach is something that resonates and got me to invest some time to play with the thing to see how it works in some
+    common scenarios.
+    </p>
+
+    <p>
+    Getting packets to travel from A to B to C and back doesn't happen automagically with WireGuard. In fact there's
+    no magic going on behind the scenes to begin with, which can be A Good Thing™ or not, depending on cirumstances.
+    The only thing that WireGuard provides is making packets flow between the two ends of a link in a secure manner,
+    everything else is left to be taken care of by whatever means is appropriate. For setting things up there's the
+    <a href="https://github.com/WireGuard/wireguard-tools/blob/master/src/wg.c">wg</a> program which helps with
+    key generation and with setting up the WireGuard interface, and further the
+    <a href="https://github.com/WireGuard/wireguard-tools/blob/master/src/wg-quick/linux.bash">wg-quick</a> script
+    which does a bit more and sets up the interfaces, peers and routes based on an INI-format file. The latter
+    also ships with a handy
+    <a href="https://github.com/WireGuard/wireguard-tools/blob/master/src/systemd/wg-quick%40.service">systemd service</a>
+    for running things permanently. These tools can be installed on Debian-like systems by saying
+    <code>apt install wireguard-tools</code>. Getting the thing running on Raspberry Pis requires a few extra steps,
+    <a href="https://www.sigmdel.ca/michel/ha/wireguard/wireguard_02_en.html">see here</a>.
+    </p>
+
+    <p>
+    Before going into the example configuration, a refresher about configuring
+    <a href="https://www.wireguard.com/#cryptokey-routing">cryptokey routing</a>. When peers are configured,
+    the "allowed IPs" settings for the peers mean that:
+    <ul>
+    <li>when a packet is <strong>sent to</strong> the WireGuard interface (e.g. <code>wg0</code>), the packet gets
+    passed to the peer that has a prefix matching the packets <strong>destination address</strong></li>
+    <li>which means that the prefixes <strong>can't overlap</strong> between the peers</li>
+    <li>when a packet is <strong>received from</strong> a peer, if the peer has a prefix mathing the packet's
+    <strong>source address</strong>, the packet is allowed in</li>
+    <li>when either sending to or receiving from a peer, if no matching prefix is found for a packet, the packet is dropped</li>
+    </ul>
+
+    Or like it says in the cryptokey routing section linked to above:
+
+    <blockquote>
+    In other words, when sending packets, the list of allowed IPs behaves as a sort of routing table, and when receiving packets,
+    the list of allowed IPs behaves as a sort of access control list.
+    </blockquote>
+    </p>
+
+    <h3>Connecting two sites, both behind NAT</h3>
+
+    <p>This example connects two sites that are both behind NAT, which requires that there's a publicly
+    accesible host running in between:
+    </p>
+
+    <pre>
++-----------+      +-----------+       +-----------+
+|           |      |           |       |           |
+|    NAT    +------+ WireGuard +-------+ Network 1 |
+|           |      |           |       |           |
++-----+-----+      +-----------+       +-----------+
+      |
+      |
+      |           +-------------+
+      |           |             |
+      +---------->+ example.com +<-----------+
+                  |             |            |
+                  +-------------+            |
+                                             |
+                                             |
++-----------+      +-----------+       +-----+-----+
+|           |      |           |       |           |
+| Network 2 +------+ WireGuard +-------+    NAT    |
+|           |      |           |       |           |
++-----------+      +-----------+       +-----------+</pre>
+
+    <p>Suppose that the public host's network is <code>10.0.0.0/24</code>,
+    <strong>Network 1</strong> is <code>192.168.1.0/24</code>,
+    <strong>Network 2</strong> is <code>172.16.1.0/24</code>,
+    and that the WireGuard network is <code>10.1.1.0/24</code>. And that all hosts
+    in both behind-NAT networks networks should see each other.
+    </p>
+
+    <p>
+    The WireGuard hosts on the behind-NAT networks connect to
+    <code>example.com:51820</code>, which has the following configuration:
+    </p>
+
+    <pre>
+[Interface]
+Address = 10.1.1.1/32
+ListenPort = 51820
+PrivateKey = kKELbYxqmwHGUyjdHiVhQ/lzyiLep2kLgAocLF4CR3Q=
+
+[Peer]
+PublicKey = D+GcHTk8uRiggEj79IhbbsLWHSdZynYjUVPWcP8aJFg=
+AllowedIPs = 10.1.1.11/32,192.168.1.0/24
+
+[Peer]
+PublicKey = up9LDZjYw8/LHH29ZQdp7Mg9bB+LIE7T4OsYLlEXLng=
+AllowedIPs = 10.1.1.12/32,172.16.1.0/24</pre>
+
+    <p>WireGuard host on <strong>Network 1</strong> (<code>192.168.1.0/24</code>):</p>
+    <pre>
+[Interface]
+Address = 10.1.1.11/32
+PrivateKey = 4DQYFpL2kkVd/rjEYLTES8Ah6K2BMOrH504TXRQyv0E=
+Table = off
+PostUp = ip -4 route add 10.1.1.0/24 dev %i
+PostUp = ip -4 route add 172.16.1.0/24 dev %i
+
+[Peer]
+PublicKey = 
+AllowedIPs = 10.1.1.0/24,192.168.1.0/24,172.16.1.0/24
+Endpoint = example.com:51820
+PersistentKeepalive = 25</pre>
+
+    <p>WireGuard host on <strong>Network 2</strong> (<code>172.16.1.0/24</code>):</p>
+    <pre>
+[Interface]
+Address = 10.1.1.12/32
+PrivateKey = CPZBHHLywkMqgW70MIgnvJRculKKGyYaBP7rIUJbpXs=
+Table = off
+PostUp = ip -4 route add 10.1.1.0/24 dev %i
+PostUp = ip -4 route add 192.168.1.0/24 dev %i
+
+[Peer]
+PublicKey = 
+AllowedIPs = 10.1.1.0/24,192.168.1.0/24,172.16.1.0/24
+Endpoint = example.com:51820
+PersistentKeepalive = 25</pre>
+
+    <p>Routing <code>Table</code> is <code>off</code> and routes are manually added in
+    <code>PostUp</code> because otherwise <code>wg-quick</code> would set routes for the
+    local network's traffic which is in <code>AllowedIPs</code>.
+    </p>
+
+    <p>All three hosts should enable forwarding:
+    </p>
+
+    <pre>sysctl -w net.ipv4.ip_forward=1</pre>
+
+    <p>In order to route traffic to WireGuard from other hosts in the networks, the hosts
+    need a route. If fiddling with the gateway isn't an option, the route needs to be set on each
+    separately, for example (assuming the WireGuard hosts on each network are <code>.1.10</code>):
+    </p>
+
+    <pre>
+# Network 1
+ip -4 route add 10.1.1.0/24 via 192.168.1.10
+ip -4 route add 172.16.1.0/24 via 192.168.1.10
+
+# Network 2
+ip -4 route add 10.1.1.0/24 via 172.16.1.10
+ip -4 route add 192.168.1.0/24 via 172.16.1.10</pre>
+
+    <p>Then, supposing that each of the configurations was in <code>/etc/wireguard/wg0.conf</code>,
+    one can say <code>wg-quick up wg0</code>. To make the WireGuard configuration come up automatically,
+    the Systemd service should be enabled:
+    </p>
+
+    <pre>
+systemctl enable wg-quick@wg0.service
+systemctl daemon-reload
+systemctl start wg-quick@wg0.service</pre>
+
+]]></body>
+  </post>
+
 </posts>
