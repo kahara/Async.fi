@@ -3099,7 +3099,7 @@ qemu-img create -f qcow2 -o preallocation=falloc $HOME/vms/$HOSTNAME-rootdisk 32
     <strong>Network 1</strong> is <code>192.168.1.0/24</code>,
     <strong>Network 2</strong> is <code>172.16.1.0/24</code>,
     and that the WireGuard network is <code>10.1.1.0/24</code>. And that all hosts
-    in both behind-NAT networks networks should see each other.
+    in both behind-NAT networks should see each other.
     </p>
 
     <p>
@@ -3131,7 +3131,7 @@ PostUp = ip -4 route add 10.1.1.0/24 dev %i
 PostUp = ip -4 route add 172.16.1.0/24 dev %i
 
 [Peer]
-PublicKey = 
+PublicKey = 2LbLqgg0hGjsQ+Y15l+mPhEtGN53Uhvzj8n9dpxVqDQ=
 AllowedIPs = 10.1.1.0/24,192.168.1.0/24,172.16.1.0/24
 Endpoint = example.com:51820
 PersistentKeepalive = 25</pre>
@@ -3146,7 +3146,7 @@ PostUp = ip -4 route add 10.1.1.0/24 dev %i
 PostUp = ip -4 route add 192.168.1.0/24 dev %i
 
 [Peer]
-PublicKey = 
+PublicKey = 2LbLqgg0hGjsQ+Y15l+mPhEtGN53Uhvzj8n9dpxVqDQ=
 AllowedIPs = 10.1.1.0/24,192.168.1.0/24,172.16.1.0/24
 Endpoint = example.com:51820
 PersistentKeepalive = 25</pre>
