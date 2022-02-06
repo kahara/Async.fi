@@ -1,0 +1,170 @@
+<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="utf-8"><title>Arduino, DS18B20, Ethernet Shield, Pachube.Com &#8226; Async.fi</title><meta name="description" content="Arduino, DS18B20, Ethernet Shield, Pachube.Com"><meta name="generator" content="https://github.com/kahara/Async.fi"><meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/"><link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"><!--[if lt IE 9]><script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script><script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script><![endif]--><style>*, h1 a, h2 a, h3 a, time a { color: #444; } h2 { margin-top: 0em; } article { margin-bottom: 1em; } time a { display: block; padding-bottom: 1em; } article * { max-width: 100%; } article pre, article code, article embed { overflow-x: auto; word-wrap: normal; white-space: pre; }</style></head><body><div class="container"><div class="row"><div class="col-md-12 page-header"><h1><a href="/">Async.fi</a></h1></div></div><div class="row"><div class="col-lg-9 col-md-9 col-sm-8 col-xs-12 col-lg-push-3 col-md-push-3 col-sm-push-4"><section><article class="post"><h2><a href="/2010/04/arduino-ds18b20-ethernet-shield-pachube-com/" rel="bookmark" title="Permanent Link to Arduino, DS18B20, Ethernet Shield, Pachube.Com">Arduino, DS18B20, Ethernet Shield, Pachube.Com</a></h2><time datetime="2010-04-03T14:40:00+00:00"><a href="/2010/04/arduino-ds18b20-ethernet-shield-pachube-com/" rel="bookmark" title="Permanent Link to Arduino, DS18B20, Ethernet Shield, Pachube.Com">April  3, 2010</a></time><a href="http://www.pachube.com/feeds/6469"><img style="width: 400px;" src="/media/2011/06/20100403-426jwimgfh1k95kq92gnfy366.jpg" alt="Kotkansaari Sensorium" /></a>
+
+<span style="font-weight: bold;">Update 2:</span> The sensor is now outside, and running on parasitic power.
+
+<span style="font-weight: bold;">Update:</span> The data is now available in a more mobile-friendly web page <a href="http://jonikahara.com/lab/pachube-6469/">here</a>.
+
+Arduino code, based on (i.e. copypasted &amp; modified a little) stuff from <a href="http://www.dial911anddie.com/weblog/2009/12/arduino-ethershield-1wire-temperature-sensor-pachube/">http://www.dial911anddie.com/weblog/2009/12/arduino-ethershield-1wire-temperature-sensor-pachube/</a> is below. Requires the 1-wire library and the Dallas Temperature Control library, both of which can be downloaded from <a href="http://milesburton.com/wiki/index.php?title=Dallas_Temperature_Control_Library#Download">here</a>. Original code utilized DHCP, but I found this to be somewhat unstable and went with a static IP address instead.
+
+<a href="http://www.maxim-ic.com/quick_view2.cfm?qv_pk=2812">DS18B20</a> gets it's power from Arduino, and the data line (that's the center pin) is connected to Arduino pin 8. Data line is pulled up to +5V through a 4k7 resistor, as suggested in Maxim literature. Parasitic power supply was not used as proper voltage was readily available from Arduino. Please note that even though parasitic power is not used, the pull-up resistor is still necessary (see the <a href="http://datasheets.maxim-ic.com/en/ds/DS18B20.pdf">data sheet</a>).
+
+<pre class="prettyprint">
+#include &lt;Ethernet.h&gt;
+#include &lt;OneWire.h&gt;
+#include &lt;DallasTemperature.h&gt;
+
+char PACHUBE_API_STRING[] = "";  // Your API key
+int PACHUBE_FEED_ID = 0; // Your feed ID 
+
+// Digital IO port used for one wire interface
+int ONE_WIRE_BUS = 8 ;
+
+// Ethernet mac address - this needs to be unique
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+
+// IP addres of www.pachube.com
+byte server[] = { 209,40,205,190 };
+
+// Arduino address
+byte ip[] = { 10, 0, 0, 223 };
+byte gateway[] = { 10, 0, 0, 2 };
+
+char version[] = "PachubeClient Ver 0.01c";
+
+#define CRLF "rn"
+
+// simple web client to connect to Pachube.com 
+Client client(server, 80);
+
+// Setup a oneWire instance to communicate with any OneWire device
+OneWire oneWire(ONE_WIRE_BUS);
+
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature sensors(&amp;oneWire);
+
+// 1wire device address
+DeviceAddress thermometer;
+
+void setup()
+{
+   // Note: Ethernet shield uses digitial IO pins 10,11,12, and 13   
+   Serial.begin(9600);
+  
+   Serial.println(version);
+   Serial.println();
+  
+   // locate devices on the 1Wire bus
+   Serial.print("Locating devices on 1Wire bus...");
+   sensors.begin();
+   int count = sensors.getDeviceCount();
+   Serial.print("Found ");
+   Serial.print( count );
+   Serial.println(" devices on 1wire bus");
+
+   // select the first sensor   
+   for ( int i=0; i&lt;count; i++ )
+   {
+      if ( sensors.getAddress(thermometer, i) ) 
+      {
+         Serial.print("1wire device ");
+         Serial.print(i);
+         Serial.print(" has address: ");
+         printAddress(thermometer);
+         Serial.println();
+      }
+      else
+      {
+         Serial.print("Unable to find address for 1wire device "); 
+         Serial.println( i );
+      }  
+   }
+  
+   // show the addresses we found on the bus
+   Serial.print("Using 1wire device: ");
+   printAddress(thermometer);
+   Serial.println();
+
+   // set the resolution to 9 bit 
+   sensors.setResolution(thermometer, 9);
+
+   Serial.print("Initializing ethernet...");  
+   delay(5000);
+   Ethernet.begin(mac, ip, gateway);
+   delay(5000);
+   Serial.println(" done.");
+}
+
+void sendData()
+{     
+   float temp = sensors.getTempC(thermometer);
+   //float temp = sensors.getTempF(thermometer);
+   Serial.print("Temp=");
+   Serial.println(temp);
+  
+   Serial.println("connecting...");
+
+   if (client.connect()) 
+   {
+      Serial.println("connected");
+      
+      client.print(
+         "PUT /api/feeds/" );
+      client.print(PACHUBE_FEED_ID);
+      client.print(".csv HTTP/1.1" CRLF
+                   "User-Agent: Fluffy Arduino Ver 0.01" CRLF
+                   "Host: www.pachube.com" CRLF 
+                   "Accept: */" "*" CRLF  // need to fix this 
+                   "X-PachubeApiKey: " );
+      client.print(PACHUBE_API_STRING);
+      client.print( CRLF 
+                    "Content-Length: 5" CRLF
+                    "Content-Type: application/x-www-form-urlencoded" CRLF
+                    CRLF );
+      client.println(temp);
+      unsigned long reqTime = millis();
+      
+      // wait for a response and disconnect 
+      while ( millis() &lt; reqTime + 10000) // wait 10 seconds for response  
+      {
+         if (client.available()) 
+         {
+            char c = client.read();
+            Serial.print(c);
+         }
+
+         if (!client.connected()) 
+         {
+            Serial.println();
+            Serial.println("server disconnected");
+            break;
+         }
+      }
+      
+      Serial.println("client disconnecting");
+      Serial.println("");
+      client.stop();
+   } 
+   else 
+   {
+      Serial.println("connection failed");
+   }
+}
+
+void printAddress(DeviceAddress deviceAddress)
+{
+   for (uint8_t i = 0; i &lt; 8; i++)
+   {
+      if (deviceAddress[i] &lt; 16) Serial.print("0");
+      Serial.print(deviceAddress[i], HEX);
+   }
+}
+
+void loop()
+{
+   sensors.requestTemperatures(); // Send the command to get temperatures
+   sendData();
+   delay( ( 5l * 60l * 1000l) - 11000l  ); // wait 5 minutes
+}
+</pre>
+<pre>
+</pre><p class="tags"><strong>Tagged with:</strong> <a href="/tag/1-wire/" rel="tag">1-wire</a> <a href="/tag/arduino/" rel="tag">arduino</a> <a href="/tag/ds18b20/" rel="tag">ds18b20</a> <a href="/tag/pachube/" rel="tag">pachube</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/experimental/" title="View all posts in experimental" rel="tag">experimental</a></p><hr class="clearfix" /></article><ul class="pager"></ul></section></div><div class="col-lg-3 col-md-3 col-sm-4 col-xs-12 col-lg-pull-9 col-md-pull-9 col-sm-pull-8"><nav><div id="search"><form id="cse-search-box" action="https://google.com/cse"><input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/><input type="hidden" name="ie" value="UTF-8"/><div class="input-group custom-search-form"><input type="text" class="form-control" name="q"><span class="input-group-btn"><button class="btn btn-default" type="submit" name="sa"><span class="glyphicon glyphicon-search"></span></button></span></div></form></div><div id="recent-posts"><h3>Recent Posts</h3><ul><li><a href="/2020/12/wireguard-notes/" title="WireGuard Notes">WireGuard Notes </a></li><li><a href="/2016/02/building-virtual-machines-with-vmbuilder/" title="Building virtual machines with vmbuilder">Building virtual machines with vmbuilder </a></li><li><a href="/2016/01/oh2ewl/" title="OH2EWL">OH2EWL </a></li><li><a href="/2014/06/salt-notes/" title="Salt Notes">Salt Notes </a></li><li><a href="/2014/01/django-and-docker-a-marriage-made-in-heaven/" title="Django and Docker: a Marriage Made in Heaven">Django and Docker: a Marriage Made in Heaven </a></li></ul></div><div id="archives"><h3>Archives</h3><ul><li><a href="/2020/12/" title="December 2020">December 2020 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/02/" title="February 2016">February 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/01/" title="January 2016">January 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/06/" title="June 2014">June 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/01/" title="January 2014">January 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/12/" title="December 2013">December 2013 <span style="color: #444;">(4)</span></a></li><li><a href="/2013/07/" title="July 2013">July 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/04/" title="April 2013">April 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/11/" title="November 2012">November 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/08/" title="August 2012">August 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/07/" title="July 2012">July 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/06/" title="June 2012">June 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/05/" title="May 2012">May 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/04/" title="April 2012">April 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/03/" title="March 2012">March 2012 <span style="color: #444;">(2)</span></a></li><li><a href="/2012/02/" title="February 2012">February 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/01/" title="January 2012">January 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/12/" title="December 2011">December 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/10/" title="October 2011">October 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/08/" title="August 2011">August 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/07/" title="July 2011">July 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2011/06/" title="June 2011">June 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/05/" title="May 2011">May 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/03/" title="March 2011">March 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/02/" title="February 2011">February 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/01/" title="January 2011">January 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2010/11/" title="November 2010">November 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2010/04/" title="April 2010">April 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2009/01/" title="January 2009">January 2009 <span style="color: #444;">(2)</span></a></li><li><a href="/2008/01/" title="January 2008">January 2008 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/11/" title="November 2006">November 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/08/" title="August 2006">August 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/07/" title="July 2006">July 2006 <span style="color: #444;">(2)</span></a></li></ul></div><div id="categories"><h3>Categories</h3><ul><li><a href="/category/note/" title="note">note </a></li><li><a href="/category/snippet/" title="snippet">snippet </a></li><li><a href="/category/meta/" title="meta">meta </a></li><li><a href="/category/shoutout/" title="shoutout">shoutout </a></li><li><a href="/category/experimental/" title="experimental">experimental </a></li></ul></div><div id="contact"><h3>Contact</h3><ul><li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li><li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li><li><a href="https://twitter.com/kahara">@kahara</a></li><li><a href="https://github.com/kahara">github.com/kahara</a></li></ul></div></nav></div></div><div class="row"><div class="col-md-9 col-lg-9 col-md-offset-3 col-lg-offset-3"><footer><p class="text-center"><a href="/">Async.fi</a> 2020</p> </footer></div></div></div> <!-- container --><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-20895288-1', 'async.fi');ga('send', 'pageview');</script></body></html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="utf-8"><title>(Desktop) Safari &amp; (W3C) Geolocation API &#8226; Async.fi</title><meta name="description" content="(Desktop) Safari &amp; (W3C) Geolocation API"><meta name="generator" content="https://github.com/kahara/Async.fi"><meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/"><link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"><!--[if lt IE 9]><script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script><script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script><![endif]--><style>*, h1 a, h2 a, h3 a, time a { color: #444; } h2 { margin-top: 0em; } article { margin-bottom: 1em; } time a { display: block; padding-bottom: 1em; } article * { max-width: 100%; } article pre, article code, article embed { overflow-x: auto; word-wrap: normal; white-space: pre; }</style></head><body><div class="container"><div class="row"><div class="col-md-12 page-header"><h1><a href="/">Async.fi</a></h1></div></div><div class="row"><div class="col-lg-9 col-md-9 col-sm-8 col-xs-12 col-lg-push-3 col-md-push-3 col-sm-push-4"><section><article class="post"><h2><a href="/2011/01/desktop-safari-w3c-geolocation-api/" rel="bookmark" title="Permanent Link to (Desktop) Safari &amp; (W3C) Geolocation API">(Desktop) Safari &amp; (W3C) Geolocation API</a></h2><time datetime="2011-01-20T22:11:00+00:00"><a href="/2011/01/desktop-safari-w3c-geolocation-api/" rel="bookmark" title="Permanent Link to (Desktop) Safari &amp; (W3C) Geolocation API">January 20, 2011</a></time>I don't know why this thing fails in desktop Safari. I'm using <a href="http://www.modernizr.com/">Modernizr</a> (which is bundled with the <span style="font-weight: bold;">highly recommended</span> <a href="http://html5boilerplate.com/">HTML5 Boilerplate</a>) which reports that the Geolocation API is supported but I'm unable to even get any dialog asking the user for permission to geolocate (which is, if I read the <a href="http://dev.w3.org/geo/api/spec-source.html#security">draft</a> correctly,  REQUIRED to be implemented).
+
+Also, it seems that others (quite a few people actually) have had this same problem but I have been unable to find a solution yet. Below is a snippet from the code; in desktop Safari the PositionErrorCallback (the latter cb function) gets called after timeout but no luck with PositionCallback, no matter how long the timeout value is. Other tested browsers work as expected.
+
+Referenced in other places:
+<ul>
+	<li><a href="http://stackoverflow.com/questions/3686630/geolocation-not-workin-on-safari-5-x-on-windows-7-xp">Geolocation not workin on Safari 5.x on Windows 7/XP (Stack Overflow)</a></li>
+	<li><a href="http://stackoverflow.com/questions/3791442/geolocation-in-safari-5">Geolocation in Safari 5 (Stack Overflow)</a></li>
+	<li><a href="http://merged.ca/iphone/html5-geolocation">HTML 5 Geolocation with Safari on the iPhone 3.0 OS, Firefox 3.5 and Chrome (demo page, fails with desktop Safari)</a></li>
+</ul>
+<p style="font-weight: bold;">(Note to self: check if Google Gears, which is still installed, is causing this?)</p>
+
+[javascript]
+var position = null;
+
+$(document).ready(function() {
+
+    if(!Modernizr.geolocation) {
+        return;
+    }
+
+    navigator.geolocation.watchPosition(
+        function(pos) {
+            position = {};
+            position.lat = pos.coords.latitude;
+            position.lng = pos.coords.longitude;
+            position.allowed = true;
+            init();
+        },
+        function(error) {
+            position = {};
+            position.allowed = false;
+        },
+        {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 86400000
+        }
+    );
+
+    checkposition();
+});
+
+function checkposition()
+{
+    log(&quot;checkposition()&quot;);
+    if(!position) {
+        setTimeout(function() {
+            checkposition();
+        }, 1000);
+        return;
+    } else {
+        if(position.allowed) {
+            log(&quot;checkposition(): got position: &quot; + position.lat + &quot;,&quot; + position.lng);
+            fetchephemeris();
+        } else {
+            log(&quot;checkposition(): could not get a position, giving up&quot;);
+            $(&quot;#geolocate&quot;).hide();
+        }
+    }
+}
+[/javascript] <p class="tags"><strong>Tagged with:</strong> <a href="/tag/geolocation/" rel="tag">geolocation</a> <a href="/tag/javascript/" rel="tag">javascript</a> <a href="/tag/safari/" rel="tag">safari</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/experimental/" title="View all posts in experimental" rel="tag">experimental</a></p><hr class="clearfix" /></article><ul class="pager"></ul></section></div><div class="col-lg-3 col-md-3 col-sm-4 col-xs-12 col-lg-pull-9 col-md-pull-9 col-sm-pull-8"><nav><div id="search"><form id="cse-search-box" action="https://google.com/cse"><input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/><input type="hidden" name="ie" value="UTF-8"/><div class="input-group custom-search-form"><input type="text" class="form-control" name="q"><span class="input-group-btn"><button class="btn btn-default" type="submit" name="sa"><span class="glyphicon glyphicon-search"></span></button></span></div></form></div><div id="recent-posts"><h3>Recent Posts</h3><ul><li><a href="/2020/12/wireguard-notes/" title="WireGuard Notes">WireGuard Notes </a></li><li><a href="/2016/02/building-virtual-machines-with-vmbuilder/" title="Building virtual machines with vmbuilder">Building virtual machines with vmbuilder </a></li><li><a href="/2016/01/oh2ewl/" title="OH2EWL">OH2EWL </a></li><li><a href="/2014/06/salt-notes/" title="Salt Notes">Salt Notes </a></li><li><a href="/2014/01/django-and-docker-a-marriage-made-in-heaven/" title="Django and Docker: a Marriage Made in Heaven">Django and Docker: a Marriage Made in Heaven </a></li></ul></div><div id="archives"><h3>Archives</h3><ul><li><a href="/2020/12/" title="December 2020">December 2020 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/02/" title="February 2016">February 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/01/" title="January 2016">January 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/06/" title="June 2014">June 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/01/" title="January 2014">January 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/12/" title="December 2013">December 2013 <span style="color: #444;">(4)</span></a></li><li><a href="/2013/07/" title="July 2013">July 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/04/" title="April 2013">April 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/11/" title="November 2012">November 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/08/" title="August 2012">August 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/07/" title="July 2012">July 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/06/" title="June 2012">June 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/05/" title="May 2012">May 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/04/" title="April 2012">April 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/03/" title="March 2012">March 2012 <span style="color: #444;">(2)</span></a></li><li><a href="/2012/02/" title="February 2012">February 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/01/" title="January 2012">January 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/12/" title="December 2011">December 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/10/" title="October 2011">October 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/08/" title="August 2011">August 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/07/" title="July 2011">July 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2011/06/" title="June 2011">June 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/05/" title="May 2011">May 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/03/" title="March 2011">March 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/02/" title="February 2011">February 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/01/" title="January 2011">January 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2010/11/" title="November 2010">November 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2010/04/" title="April 2010">April 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2009/01/" title="January 2009">January 2009 <span style="color: #444;">(2)</span></a></li><li><a href="/2008/01/" title="January 2008">January 2008 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/11/" title="November 2006">November 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/08/" title="August 2006">August 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/07/" title="July 2006">July 2006 <span style="color: #444;">(2)</span></a></li></ul></div><div id="categories"><h3>Categories</h3><ul><li><a href="/category/note/" title="note">note </a></li><li><a href="/category/snippet/" title="snippet">snippet </a></li><li><a href="/category/meta/" title="meta">meta </a></li><li><a href="/category/shoutout/" title="shoutout">shoutout </a></li><li><a href="/category/experimental/" title="experimental">experimental </a></li></ul></div><div id="contact"><h3>Contact</h3><ul><li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li><li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li><li><a href="https://twitter.com/kahara">@kahara</a></li><li><a href="https://github.com/kahara">github.com/kahara</a></li></ul></div></nav></div></div><div class="row"><div class="col-md-9 col-lg-9 col-md-offset-3 col-lg-offset-3"><footer><p class="text-center"><a href="/">Async.fi</a> 2020</p> </footer></div></div></div> <!-- container --><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-20895288-1', 'async.fi');ga('send', 'pageview');</script></body></html>

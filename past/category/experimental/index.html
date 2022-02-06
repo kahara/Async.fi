@@ -1,0 +1,219 @@
+<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="utf-8"><title>experimental &#8226; Async.fi</title><meta name="description" content="Posts in category experimental"><meta name="generator" content="https://github.com/kahara/Async.fi"><meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/"><link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"><!--[if lt IE 9]><script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script><script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script><![endif]--><style>*, h1 a, h2 a, h3 a, time a { color: #444; } h2 { margin-top: 0em; } article { margin-bottom: 1em; } time a { display: block; padding-bottom: 1em; } article * { max-width: 100%; } article pre, article code, article embed { overflow-x: auto; word-wrap: normal; white-space: pre; }</style></head><body><div class="container"><div class="row"><div class="col-md-12 page-header"><h1><a href="/">Async.fi</a></h1></div></div><div class="row"><div class="col-lg-9 col-md-9 col-sm-8 col-xs-12 col-lg-push-3 col-md-push-3 col-sm-push-4"><section><article class="post"><h2><a href="/2012/01/mikrotik-openvpn-server/" rel="bookmark" title="Permanent Link to Mikrotik OpenVPN Server ">Mikrotik OpenVPN Server </a></h2><time datetime="2012-01-29T10:55:52+00:00"><a href="/2012/01/mikrotik-openvpn-server/" rel="bookmark" title="Permanent Link to Mikrotik OpenVPN Server ">January 29, 2012</a></time><p>The purpose of this post is to describe, step by step, my attempt to set up an <a href="http://en.wikipedia.org/wiki/OpenVPN">OpenVPN</a> server on a <a href="http://routerboard.com/RB750">Mikrotik RouterBOARD 750</a> and create a working tunnel from an outside machine (<a href="http://aws.amazon.com/windows/">AWS EC2 Windows Server 2008 R2</a>) to this OpenVPN server so that an <a href="http://en.wikipedia.org/wiki/Samba_(software)">SMB server</a> on the local network can be accessed from said outside machine. The following diagram gives an overview of the setup:</p>
+
+<p><a href="/media/2012/01/MikrotikOpenVPNTest1.png"><img class="alignleft size-full" title="Mikrotik OpenVPN Server Test" src="/media/2012/01/MikrotikOpenVPNTest1.png" alt="" /></a></p>
+
+<p>I am going to decribe how to:</p>
+<ul>
+	<li>generate certificates to be used with OpenVPN</li>
+	<li>set up OpenVPN server on Mikrotik router</li>
+	<li>set up a tunnel with <a href="http://www.openvpn.net/index.php/open-source/downloads.html">OpenVPN client</a> on Windows</li>
+</ul>
+I am not going to describe the following:
+<ul>
+	<li>setting up and connecting to an EC2 Windows instance</li>
+	<li>setting up a Samba Server</li>
+</ul>
+A few things worth mentioning about Mikrotik OpenVPN server implementation (that will likely bite if not known in advance):
+<ul>
+	<li>only supports TCP mode, UDP is not supported</li>
+	<li>username/password pair is also required even though certificates are being used for authentication</li>
+</ul>
+
+<h3>Generate certificates to be used with OpenVPN</h3>
+<pre>root@inhouse-debian:~# <strong>apt-get install openvpn</strong>
+root@inhouse-debian:~# <strong>mkdir ovpn-cert</strong>
+root@inhouse-debian:~# <strong>cd ovpn-cert/</strong>
+root@inhouse-debian:~/ovpn-cert# <strong>cp -r /usr/share/doc/openvpn/examples/easy-rsa/2.0/* .</strong>
+root@inhouse-debian:~/ovpn-cert# <strong>emacs vars</strong></pre>
+In the file <code>vars</code> I set the following values:
+<pre>export KEY_COUNTRY="FI"
+export KEY_PROVINCE="Etela-Suomi"
+export KEY_CITY="Kotka"
+export KEY_ORG="Async.fi"
+export KEY_EMAIL="joni.kahara@async.fi"
+export KEY_CN="kahara.dyndns.org"
+export KEY_NAME="kahara.dyndns.org"
+export KEY_OU="kahara.dyndns.org"</pre>
+If I have understood correctly, of these only <em>CN</em> (Common Name) is obligatory. I may be wrong. Anyway, continuing:
+<pre>root@inhouse-debian:~/ovpn-cert# <strong>source vars</strong>
+root@inhouse-debian:~/ovpn-cert# <strong>./clean-all</strong>
+root@inhouse-debian:~/ovpn-cert# <strong>./build-ca</strong>
+root@inhouse-debian:~/ovpn-cert# <strong>./build-key-server kahara.dyndns.org</strong>
+root@inhouse-debian:~/ovpn-cert# <strong>openssl rsa -in keys/kahara.dyndns.org.key -out keys/kahara.dyndns.org.pem</strong>
+root@inhouse-debian:~/ovpn-cert# <strong>./build-key ec2 </strong>
+root@inhouse-debian:~/ovpn-cert# <strong>apt-get install ncftp</strong>
+root@inhouse-debian:~/ovpn-cert# <strong>ncftpput -u admin 192.168.1.1 / keys/kahara.dyndns.org.crt keys/kahara.dyndns.org.pem keys/ca.crt</strong></pre>
+<h3>Set up OpenVPN server on Mikrotik router</h3>
+All the stuff here can also be made through Mikrotik's admin interface; textual form without screen shots is used just to keep thing terse.
+<pre>root@inhouse-debian:~/ovpn-cert# <strong>ssh admin@192.168.1.1</strong>
+[admin@MikroTik] &gt; <strong>/certificate</strong>
+[admin@MikroTik] /certificate&gt; <strong>import file=kahara.dyndns.org.crt</strong>
+[admin@MikroTik] /certificate&gt; <strong>import file=kahara.dyndns.org.pem</strong>
+[admin@MikroTik] /certificate&gt; <strong>import file=ca.crt</strong>
+[admin@MikroTik] /certificate&gt; <strong>decrypt</strong>
+[admin@MikroTik] /certificate&gt; <strong>..</strong>
+[admin@MikroTik] &gt;<strong> /interface bridge add name=ovpn-bridge</strong>
+[admin@MikroTik] &gt;<strong> /interface bridge port add interface=ether2-master-local bridge=ovpn-bridge</strong>
+[admin@MikroTik] &gt;<strong> /ip address add address=192.168.1.64/24 interface=ovpn-bridge </strong>
+[admin@MikroTik] &gt;<strong> /ip pool add name=ovpn-pool ranges=192.168.1.65-192.168.1.99</strong>
+[admin@MikroTik] &gt; <strong>/ppp profile add bridge=ovpn-bridge name=ovpn-profile remote-address=ovpn-pool</strong>
+[admin@MikroTik] &gt; <strong>/ppp secret add service=ovpn local-address=192.168.1.64 name=user1 password=pass1 profile=ovpn-profile</strong>
+[admin@MikroTik] &gt; <strong>/interface ovpn-server server set auth=sha1,md5 certificate=cert1 cipher=blowfish128,aes128,aes192,aes256 default-profile=ovpn-profile enabled=yes keepalive-timeout=disabled max-mtu=1500 mode=ethernet netmask=24 port=1194 require-client-certificate=yes</strong>
+[admin@MikroTik] &gt; <strong>/ip firewall filter add action=accept chain=input disabled=no protocol=tcp dst-port=1194</strong>
+[admin@MikroTik] &gt; <strong>/ip firewall filter move 5 destination=1</strong></pre>
+That last step moves the new rule to the front of the chain; numbers ("5", "1") will likely be something else on your configuration. Firewall rule listing can be printed with the following command:
+<pre>[admin@MikroTik] &gt; <strong>/ip firewall filter print</strong></pre>
+<h3>Setup up a tunnel with OpenVPN client on Windows</h3>
+After installing OpenVPN, create a config file for it. Here it's called "kahara.dyndns.org.ovpn":
+<pre>client
+dev tap
+proto tcp
+remote kahara.dyndns.org 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+ca ca.crt
+cert ec2.crt
+key ec2.key
+verb 3
+pull
+auth-user-pass userpass.txt</pre>
+Also, create a file called "userpass.txt" and put the following to it:
+<pre>user1
+pass1</pre>
+Of course in an IRL situation one should use a real password. Make sure you copied the .crt and .key files over to the Windows machine, after which you can run OpenVPN client with:
+<pre>PS C:\Users\Administrator\Desktop&gt; <strong>openvpn.exe .\kahara.dyndns.org.ovpn</strong></pre>
+And here we have an EC2 client connected to a local SMB resource over the tunnel:
+
+<a href="/media/2012/01/ec2-46-137-68-14.eu-west-1.compute.amazonaws.com_.png"><img class="alignleft size-full" title="ec2-46-137-68-14.eu-west-1.compute.amazonaws.com" src="/media/2012/01/ec2-46-137-68-14.eu-west-1.compute.amazonaws.com_.png" alt="" /></a><p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/debian/" rel="tag">debian</a> <a href="/tag/ec2/" rel="tag">ec2</a> <a href="/tag/mikrotik/" rel="tag">mikrotik</a> <a href="/tag/openvpn/" rel="tag">openvpn</a> <a href="/tag/rb750/" rel="tag">rb750</a> <a href="/tag/rdp/" rel="tag">rdp</a> <a href="/tag/smb/" rel="tag">smb</a> <a href="/tag/windows-server-2008-r2/" rel="tag">windows-server-2008-r2</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/experimental/" title="View all posts in experimental" rel="tag">experimental</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/05/windows-server-2008-r2-on-amazon-ec2/" rel="bookmark" title="Permanent Link to Windows Server 2008 R2 on Amazon EC2">Windows Server 2008 R2 on Amazon EC2</a></h2><time datetime="2011-05-08T18:26:23+00:00"><a href="/2011/05/windows-server-2008-r2-on-amazon-ec2/" rel="bookmark" title="Permanent Link to Windows Server 2008 R2 on Amazon EC2">May  8, 2011</a></time><a href="/media/2011/05/20110508-xdjdyit8w4hg3dbicwu8gged68.png"><img class="alignleft size-full wp-image-641" title="Windows Server 2008 R2 on Amazon EC2 Micro Instance" src="/media/2011/05/20110508-xdjdyit8w4hg3dbicwu8gged68.png" alt="" width="1440" height="937" /></a>
+
+Plan to use an in-house box to run a <a href="https://async.fi/2011/03/xenserver-hosting-paravirtual-64-bit-ubuntu-10-04-guests/">XenServer</a> to host XP instances (I need multiple Windows desktops for "testing" purposes if anyone asks) had to be scrapped because the box was simply too loud and I couldn't get the <a href="https://async.fi/2011/05/building-a-wds-bridge-with-consumer-grade-wlan-aps/">wireless bridge to work</a> &#8211; not that the latter would have helped anyway because like I said the box really is loud and relocating it anywhere inside our flat just wouldn't lower the noise level enough for it to not disturb sleep.
+
+Which brings us here: launching a Windows Server 2008 R2 instance on Amazon EC2 and setting up Remote Desktop Services to enable multiple simultaneous client sessions. Below we can see Alice, Bob, Charlie and Dave each happily running their own Remote Desktop session at the same time:
+
+<a href="/media/2011/05/20110508-8d6fgppd1h5ejehpqun8cu9hhu.png"><img class="alignleft size-full wp-image-656" title="Alice, Bob, Charlie and Dave" src="/media/2011/05/20110508-8d6fgppd1h5ejehpqun8cu9hhu.png" alt="" width="1678" height="1049" /></a>
+
+&nbsp;
+
+The whole thing runs "tolerably" smoothly even on the severely memory-limited Micro Instace:
+
+<a href="/media/2011/05/20110508-dmhedmbyncijb81pkqu12d2d19.png"><img class="aligncenter size-full wp-image-663" title="Taskmgr" src="/media/2011/05/20110508-dmhedmbyncijb81pkqu12d2d19.png" alt="" width="403" height="446" /></a>
+
+At $0.035 per hour this can be considered cheap. And, the server can be shut down when it's not needed in which case the only charge will be for the admittedly humonguos (35 gigabytes) Windows root partition. And of course those clients would need Client Access Licenses which adds a one time cost of roughly $100 per client. Now, to directly compare this kind of setup with having an actual physical server would indicate poor judgement as both have their strong and weak points but costs can be compared. So here we have an estimate of what the total cost of running a server like this for a three-year period would be, <em>sans</em> CALs:
+<table>
+<tbody>
+<tr>
+<th></th>
+<th>On-Demand EC2</th>
+<th>Reserved EC2
+(1-year Contract)</th>
+<th>Reserved EC2
+(3-year Contract)</th>
+</tr>
+<tr>
+<td>One-time costs</td>
+<td>$0.00</td>
+<td>$54.00</td>
+<td>$82.00</td>
+</tr>
+<tr>
+<td>Compute</td>
+<td>$922.32</td>
+<td>$421.56</td>
+<td>$421.56</td>
+</tr>
+<tr>
+<td>Storage (35 GB)</td>
+<td>$138.60</td>
+<td>$138.60</td>
+<td>$138.60</td>
+</tr>
+<tr>
+<td>I/O (10 IOPS)</td>
+<td>$103.00</td>
+<td>$103.00</td>
+<td>$103.00</td>
+</tr>
+<tr>
+<td>Transfer In (1 GB/m)</td>
+<td>$3.60</td>
+<td>$3.60</td>
+<td>$3.60</td>
+</tr>
+<tr>
+<td>Transfer Out (10 GB/m)</td>
+<td>$48.60</td>
+<td>$48.60</td>
+<td>$48.60</td>
+</tr>
+<tr>
+<td>Total Cost (Euros)</td>
+<td><strong>849.69 &#8364;</strong></td>
+<td><strong>613.00 &#8364;</strong></td>
+<td><strong>557.11 &#8364;</strong></td>
+</tr>
+<tr>
+<td>Per Month (Euros)</td>
+<td><strong>23.60 &#8364;</strong></td>
+<td><strong>17.03 &#8364;</strong></td>
+<td><strong>15.48 &#8364;</strong></td>
+</tr>
+</tbody>
+</table>
+Source: <a href="http://calculator.s3.amazonaws.com/calc5.html">http://calculator.s3.amazonaws.com/calc5.html</a>
+
+Then again, that 600 &#8364; would get you two HP Proliant MicroServers. Yet, then again, that price does not include Windows licenses and they would need a physical location, electricity, an Internet connection &#8211; an so on.<p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/ebs/" rel="tag">ebs</a> <a href="/tag/ec2/" rel="tag">ec2</a> <a href="/tag/pricing/" rel="tag">pricing</a> <a href="/tag/remote-desktop-services/" rel="tag">remote-desktop-services</a> <a href="/tag/windows-server-2008-r2/" rel="tag">windows-server-2008-r2</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/experimental/" title="View all posts in experimental" rel="tag">experimental</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/05/building-a-wds-bridge-with-consumer-grade-wlan-aps/" rel="bookmark" title="Permanent Link to Building a WDS Bridge with Consumer Grade WLAN APs">Building a WDS Bridge with Consumer Grade WLAN APs</a></h2><time datetime="2011-05-08T10:09:45+00:00"><a href="/2011/05/building-a-wds-bridge-with-consumer-grade-wlan-aps/" rel="bookmark" title="Permanent Link to Building a WDS Bridge with Consumer Grade WLAN APs">May  8, 2011</a></time><a href="/media/2011/04/a-link.jpg"><img class="alignleft size-full wp-image-543" title="a-link" src="/media/2011/04/a-link.jpg" alt="" width="100%" /></a>
+
+Small AP is small &#8211; and has a built-in antenna, too. I got two of <a href="http://store.a-link.com/fi/WNA.html">these</a> (for 19,90&#8364; per piece &#8211; not A-link list price&#8230;) and set up a bridge so I could relocate my noisy <a href="https://async.fi/2011/03/xenserver-hosting-paravirtual-64-bit-ubuntu-10-04-guests/">Xen box</a> from living room to kitchen to keep the box running 24/7 <em>and</em> sleep. (Turns out that in the end even this didn't help because the box remained loud enough to disturb sleep no matter what settings were selected in BIOS thermal management.) Initially it looked like the bridge worked just fine, except my testing revealed that the transmission speed was nowhere near the advertised "IEEE 802.11n (draft 2.0) / 150Mb":
+
+<pre>
+XenCenter.iso              100%   44MB   1.5MB/s   00:29
+</pre>
+
+After trying different cryptos from WPA2 to plain text and fiddling with various other settings I came to the conclusion that the slow speed was a <em>feature</em> of the device. Anyway, this was not really any kind of concern as I was more interested in latency, which was low enough (a few milliseconds). Put all this together and my opinion is that it's good enough for an access point that is about the size of a deck of cards and costs twenty euros.
+
+What did turn out to be a problem is that at times the AP's would somehow manage get a broadcast storm going on, which of course  took the wired network down with it very quickly. I wasn't really able to get to the root of this but from what I observed I can tell that the broadcast storm would happen even when one AP was connected to the primary wired segment and the AP at the other end was just "floating" there, with nothing connected to its' Ethernet ports. Also, while after enabling STP in the devices I could, using <code>tcpdump</code>, observe the STP config packets doing their thing and reconfiguring after for example dropping and then reconnecting either end of the bridge, this (STP) did nothing to prevent the broadcast storm from happening. I should also note for the record that I was using the "WDS", not "AP+WDS" mode. 
+
+Verdict: the devices just aren't suitable for this application, i.e. they are buggy and do not fully work as advertised but given their relatively compact size and ability to function as clients on a WLAN, I'll keep these.<p class="tags"><strong>Tagged with:</strong> <a href="/tag/stp/" rel="tag">stp</a> <a href="/tag/wds/" rel="tag">wds</a> <a href="/tag/wlan/" rel="tag">wlan</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/experimental/" title="View all posts in experimental" rel="tag">experimental</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/03/h264-http-test-stream-generator/" rel="bookmark" title="Permanent Link to H264 HTTP Test Stream Generator">H264 HTTP Test Stream Generator</a></h2><time datetime="2011-03-09T21:40:33+00:00"><a href="/2011/03/h264-http-test-stream-generator/" rel="bookmark" title="Permanent Link to H264 HTTP Test Stream Generator">March  9, 2011</a></time>As I haven't got an H264-capable camera to use as a test source (yet) I'm using the following GStreamer pipeline, adapted from <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-plugins/html/gst-plugins-base-plugins-videotestsrc.html">videotestsrc documentation</a> to generate an endless, mildly hypnotic low bitrate <a href="http://en.wikipedia.org/wiki/Zone_plate">zone plate</a> pattern wrapped in an MPEG transport stream. A clock is also shown so that when the stream is transcoded and/or segmented, it's easy to see how bad the lag is. Audio is not included but for example audiotestsrc could be plugged in the pipeline if necessary (although I won't be using audio in my app). VLC is used in the end of the command line to serve the stream over HTTP.
+<pre>
+gst-launch-0.10 -v mpegtsmux name="mux" ! fdsink fd=1 &#187;
+videotestsrc pattern=zone-plate kx2=20 ky2=20 kt=1 ! &#187;
+video/x-raw-yuv,width=320,height=240 ! &#187;
+clockoverlay valign=bottom halign=left font-desc="Sans 23" ! &#187;
+ffmpegcolorspace ! videorate ! video/x-raw-yuv,framerate=15/1 ! &#187;
+x264enc bitrate=100000 cabac=false pass=qual quantizer=27 &#187;
+subme=4 threads=0 bframes=0 dct8x8=false ! mux. | &#187;
+vlc -I "dummy" file/ts:///dev/stdin &#187;
+:sout='#std{access=http{mime=video/mp4},mux=ts,dst=192.168.1.35:8000}'
+</pre>
+
+<p><strong>Update:</strong> Here's how to save the encoded video to an MPEG-4 file:</p>
+    
+<pre>
+gst-launch-0.10 -v videotestsrc num-buffers=900000 pattern=zone-plate kx2=20 ky2=20 kt=1 ! video/x-raw-yuv,width=1920,height=1080,framerate=25/1 ! x264enc bitrate=16000 cabac=false pass=qual quantizer=27 subme=4 threads=0 bframes=0 dct8x8=false ! queue ! muxer. ffmux_mp4 name=muxer ! filesink location=zone-plate-900000-frames-1920x1080-25fps.m4v
+</pre>
+<p class="tags"><strong>Tagged with:</strong> <a href="/tag/gstreamer/" rel="tag">gstreamer</a> <a href="/tag/h264/" rel="tag">h264</a> <a href="/tag/vlc/" rel="tag">vlc</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/experimental/" title="View all posts in experimental" rel="tag">experimental</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/02/http-live-streaming-with-vlc/" rel="bookmark" title="Permanent Link to HTTP Live Streaming with VLC">HTTP Live Streaming with VLC</a></h2><time datetime="2011-02-27T17:07:49+00:00"><a href="/2011/02/http-live-streaming-with-vlc/" rel="bookmark" title="Permanent Link to HTTP Live Streaming with VLC">February 27, 2011</a></time>Well, it took "a while" but I finally got <a title="HTTP Live Streaming" href="http://en.wikipedia.org/wiki/HTTP_Live_Streaming">HTTP Live Streaming</a> working with <a title="VLC" href="http://www.videolan.org/vlc/">VLC</a>. Downloading and compiling the latest<span id="hwytop"> </span> from <a title="Videolan's Git repo" href="http://git.videolan.org/?p=vlc.git">Videolan's Git repo</a> was required ("1.2.0-git Twoflower" here). I might add that even though on the box that I did this I've compiled a lot of different programs (an Ubuntu installation that has gone through multiple dist-upgrades so it's a few years old and has a lot of packages (2344 atm) installed), quite a few external <em>-dev</em> packages relating to audio and video had to be apt-get'ed to make things work.
+
+Below is the command to make VLC read a DVD and generate a segmented stream of H264 video and AAC audio to directory /var/www/html-video-stream/x/ on our local web server. In an IRL situation we would perhaps run the transcoder and segmenter instances on separate machines, or if we already had a suitable H264 stream source (like a camera) we could skip the transcoding step altogether.
+<pre>vlc -v -I "dummy" dvdsimple:///dev/scd0 &#187;
+:sout="#transcode{vcodec=h264,vb=100, &#187;
+venc=x264{aud,profile=baseline,level=30,keyint=30,ref=1}, &#187;
+aenc=ffmpeg{aac-profile=low},acodec=mp4a,ab=32,channels=1,samplerate=8000} &#187;
+:std{access=livehttp{seglen=10,delsegs=true,numsegs=5, &#187;
+index=/var/www/html-video-stream/x/stream.m3u8, &#187;
+index-url=http://192.168.1.33/html-video-stream/x/stream-########.ts}, &#187;
+mux=ts{use-key-frames}, &#187;
+dst=/var/www/html-video-stream/x/stream-########.ts}"
+</pre>
+&nbsp;
+
+QuickTime X (fanboys have had this since Snow Leopard) supports HTTP Live Streaming, so in order to show the above stream on a web page in Safari using the &lt;video&gt; tag, we can do the following:
+<pre id="line62">&lt;video autoplay loop controls&gt;
+  &lt;source src="http://192.168.1.33/html-video-stream/x/stream.m3u8" &#187;
+   type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'/&gt;
+  &lt;!-- additional sources here --&gt;
+&lt;/video&gt;</pre>
+&nbsp;
+
+Although I'm not sure if this will work in a situation where we attempt to feed H264 to clients that don't support HTTP Live Streaming, that is, we have an additional &lt;source&gt; element that points to a "regular" H264 HTTP stream. However, adding Ogg/Theora and WebM/VP8 support should not cause problems &#8211; I just haven't been able to make VLC output those (properly) yet. HTML5 video tag streaming support in different browsers is also one big question mark.<p class="tags"><strong>Tagged with:</strong> <a href="/tag/aac/" rel="tag">aac</a> <a href="/tag/h264/" rel="tag">h264</a> <a href="/tag/http-live-streaming/" rel="tag">http-live-streaming</a> <a href="/tag/vlc/" rel="tag">vlc</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/experimental/" title="View all posts in experimental" rel="tag">experimental</a></p><hr class="clearfix" /></article><ul class="pager"><li><a href="/category/experimental/page/2/" >&lt; Older Entries</a></li></ul></section></div><div class="col-lg-3 col-md-3 col-sm-4 col-xs-12 col-lg-pull-9 col-md-pull-9 col-sm-pull-8"><nav><div id="search"><form id="cse-search-box" action="https://google.com/cse"><input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/><input type="hidden" name="ie" value="UTF-8"/><div class="input-group custom-search-form"><input type="text" class="form-control" name="q"><span class="input-group-btn"><button class="btn btn-default" type="submit" name="sa"><span class="glyphicon glyphicon-search"></span></button></span></div></form></div><div id="recent-posts"><h3>Recent Posts</h3><ul><li><a href="/2020/12/wireguard-notes/" title="WireGuard Notes">WireGuard Notes </a></li><li><a href="/2016/02/building-virtual-machines-with-vmbuilder/" title="Building virtual machines with vmbuilder">Building virtual machines with vmbuilder </a></li><li><a href="/2016/01/oh2ewl/" title="OH2EWL">OH2EWL </a></li><li><a href="/2014/06/salt-notes/" title="Salt Notes">Salt Notes </a></li><li><a href="/2014/01/django-and-docker-a-marriage-made-in-heaven/" title="Django and Docker: a Marriage Made in Heaven">Django and Docker: a Marriage Made in Heaven </a></li></ul></div><div id="archives"><h3>Archives</h3><ul><li><a href="/2020/12/" title="December 2020">December 2020 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/02/" title="February 2016">February 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/01/" title="January 2016">January 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/06/" title="June 2014">June 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/01/" title="January 2014">January 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/12/" title="December 2013">December 2013 <span style="color: #444;">(4)</span></a></li><li><a href="/2013/07/" title="July 2013">July 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/04/" title="April 2013">April 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/11/" title="November 2012">November 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/08/" title="August 2012">August 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/07/" title="July 2012">July 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/06/" title="June 2012">June 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/05/" title="May 2012">May 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/04/" title="April 2012">April 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/03/" title="March 2012">March 2012 <span style="color: #444;">(2)</span></a></li><li><a href="/2012/02/" title="February 2012">February 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/01/" title="January 2012">January 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/12/" title="December 2011">December 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/10/" title="October 2011">October 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/08/" title="August 2011">August 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/07/" title="July 2011">July 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2011/06/" title="June 2011">June 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/05/" title="May 2011">May 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/03/" title="March 2011">March 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/02/" title="February 2011">February 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/01/" title="January 2011">January 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2010/11/" title="November 2010">November 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2010/04/" title="April 2010">April 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2009/01/" title="January 2009">January 2009 <span style="color: #444;">(2)</span></a></li><li><a href="/2008/01/" title="January 2008">January 2008 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/11/" title="November 2006">November 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/08/" title="August 2006">August 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/07/" title="July 2006">July 2006 <span style="color: #444;">(2)</span></a></li></ul></div><div id="categories"><h3>Categories</h3><ul><li><a href="/category/note/" title="note">note </a></li><li><a href="/category/snippet/" title="snippet">snippet </a></li><li><a href="/category/meta/" title="meta">meta </a></li><li><a href="/category/shoutout/" title="shoutout">shoutout </a></li><li><a href="/category/experimental/" title="experimental">experimental </a></li></ul></div><div id="contact"><h3>Contact</h3><ul><li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li><li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li><li><a href="https://twitter.com/kahara">@kahara</a></li><li><a href="https://github.com/kahara">github.com/kahara</a></li></ul></div></nav></div></div><div class="row"><div class="col-md-9 col-lg-9 col-md-offset-3 col-lg-offset-3"><footer><p class="text-center"><a href="/">Async.fi</a> 2020</p> </footer></div></div></div> <!-- container --><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-20895288-1', 'async.fi');ga('send', 'pageview');</script></body></html>

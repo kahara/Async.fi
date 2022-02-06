@@ -1,0 +1,134 @@
+<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="utf-8"><title>kinect &#8226; Async.fi</title><meta name="description" content="Posts tagged with kinect"><meta name="generator" content="https://github.com/kahara/Async.fi"><meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/"><link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"><!--[if lt IE 9]><script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script><script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script><![endif]--><style>*, h1 a, h2 a, h3 a, time a { color: #444; } h2 { margin-top: 0em; } article { margin-bottom: 1em; } time a { display: block; padding-bottom: 1em; } article * { max-width: 100%; } article pre, article code, article embed { overflow-x: auto; word-wrap: normal; white-space: pre; }</style></head><body><div class="container"><div class="row"><div class="col-md-12 page-header"><h1><a href="/">Async.fi</a></h1></div></div><div class="row"><div class="col-lg-9 col-md-9 col-sm-8 col-xs-12 col-lg-push-3 col-md-push-3 col-sm-push-4"><section><article class="post"><h2><a href="/2011/08/kinectvision-com-code/" rel="bookmark" title="Permanent Link to KinectVision.com code">KinectVision.com code</a></h2><time datetime="2011-08-31T19:49:42+00:00"><a href="/2011/08/kinectvision-com-code/" rel="bookmark" title="Permanent Link to KinectVision.com code">August 31, 2011</a></time>
+    <p>This is old, from December 2010 it seems, but it's here in case the machine goes titsup. Quick, dirty and ugly but it works most of the time. First, the capture program:</p>
+
+<pre>
+#include &lt;libusb-1.0/libusb.h&gt;
+#include &quot;libfreenect.h&quot;
+#include &quot;libfreenect_sync.h&quot;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+/*
+  No error checking performed whatsoever; dealing with it later (or not).
+ */
+int main(int argc, char** argv)
+{
+  uint16_t * depth = (uint16_t *)malloc(FREENECT_DEPTH_11BIT_SIZE);
+  uint32_t timestamp;
+  int index = 0;
+  freenect_depth_format fmt = FREENECT_DEPTH_11BIT;
+
+  uint8_t * depth8 = (uint8_t *)malloc(FREENECT_FRAME_PIX);
+  int i;
+
+  /* Capture one Kinect depth frame */
+  freenect_sync_get_depth(&amp;depth, &amp;timestamp, index, fmt);
+
+  /* Convert captured frame to an 8-bit greyscale image */
+  for(i = 0; i &lt; FREENECT_FRAME_PIX; i++) {
+    depth8[i] = (2048 * 256) / (2048.0 - depth[i]);
+  }
+
+  /* Write raw greyscale image to stdout  */
+  fwrite(depth8, FREENECT_FRAME_PIX, 1, stdout);
+
+  return 0;
+}
+</pre>
+
+
+<p>Makefile:</p>
+
+<pre>
+all:		capkinect
+
+clean:
+		rm -f capkinect.o capkinect
+
+capkinect.o:	capkinect.c
+	gcc -g -I/usr/local/include/libfreenect/ -c capkinect.c -o capkinect.o
+
+capkinect:	capkinect.o
+	gcc -g capkinect.o -L/usr/local/lib/ -lfreenect_sync -o capkinect
+</pre>
+
+
+<p>Uploader:</p>
+
+<pre>
+#!/bin/sh
+
+INPUT=`mktemp`
+AVG=`mktemp`
+TEMP=`mktemp`
+OUTPUT=`mktemp --directory`
+
+#COLORMAP=&quot;black-#45931c&quot;
+COLORMAP=&quot;black-white&quot;
+
+# initial average frame
+capkinect | rawtopgm 640 480 | pnmcut 8 8 624 464 | pgmtoppm $COLORMAP &gt;$AVG
+
+while [ true ]; do
+
+    #echo &quot;input: $INPUT avg: $AVG temp: $TEMP output: $OUTPUT colormap: $COLORMAP&quot;
+
+    capkinect | rawtopgm 640 480 | pnmcut 8 8 624 464 | pgmtoppm $COLORMAP &gt;$INPUT
+
+    FILENAME=$OUTPUT/`date +%s.%N`
+
+    ppmmix 0.035 $AVG $INPUT &gt;$FILENAME.ppm
+
+    cp $FILENAME.ppm $AVG
+
+    cat $FILENAME.ppm | cjpeg -greyscale -quality 65 &gt;$FILENAME.jpg
+
+    echo &quot;user=XXXX:AAAA&quot; | curl --digest -K - -F &quot;file=@$FILENAME.jpg&quot; http://kinectvision.com/depth
+
+    rm $FILENAME.ppm $FILENAME.jpg
+
+    sleep 1
+
+done
+</pre>
+
+<p>Server end script that inputs and outputs frames:</p>
+
+<pre>
+$latest_path = $_SERVER[&quot;DOCUMENT_ROOT&quot;] . &quot;/incoming/latest&quot;;
+
+if($_SERVER[&quot;REQUEST_METHOD&quot;] == &quot;POST&quot;) {
+
+  if(!isset($_FILES[&quot;file&quot;][&quot;name&quot;])) {
+    exit();
+  }
+  if(move_uploaded_file($_FILES[&quot;file&quot;][&quot;tmp_name&quot;], $_SERVER[&quot;DOCUMENT_ROOT&quot;] . &quot;/incoming/&quot; . $_FILES[&quot;file&quot;][&quot;name&quot;])) {
+    file_put_contents($latest_path, $_FILES[&quot;file&quot;][&quot;name&quot;]);
+  }
+
+} elseif($_SERVER[&quot;REQUEST_METHOD&quot;] == &quot;HEAD&quot;) {
+
+  $latest = file_get_contents($latest_path);
+  header(&quot;X-KinectVision-Latest: &quot; . $latest);
+
+} elseif($_SERVER[&quot;REQUEST_METHOD&quot;] == &quot;GET&quot;) {
+
+  $latest = $_SERVER[&quot;DOCUMENT_ROOT&quot;] . &quot;/incoming/&quot; . file_get_contents($latest_path);
+  header(&quot;Content-Type: image/jpeg&quot;);
+  header(&quot;X-KinectVision-Latest: &quot; . $latest);
+
+  if(isset($_GET[&quot;width&quot;]) &amp;&amp; intval($_GET[&quot;width&quot;]) &lt; 624) {
+    $width = intval($_GET[&quot;width&quot;]);
+    $f = popen(&quot;djpeg -pnm -fast -greyscale $latest | pnmscalefixed -width=$width | cjpeg -greyscale -quality 65&quot;, &quot;r&quot;);
+    while(!feof($f)) {
+      echo fread($f, 1024);
+    }
+    fclose($f);
+  } else {
+    echo file_get_contents($latest);
+  }
+
+}
+</pre>
+
+<p>(Don't know if it's the <a href="http://aquoid.com/news/themes/suffusion/">Suffusion theme</a> or what that kill all the newlines from these listings. They're there, I can assure you, they're just not visible.)</p><p class="tags"><strong>Tagged with:</strong> <a href="/tag/bash/" rel="tag">bash</a> <a href="/tag/c/" rel="tag">c</a> <a href="/tag/kinect/" rel="tag">kinect</a> <a href="/tag/kinectvision-com/" rel="tag">kinectvision-com</a> <a href="/tag/make/" rel="tag">make</a> <a href="/tag/openkinect/" rel="tag">openkinect</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><ul class="pager"></ul></section></div><div class="col-lg-3 col-md-3 col-sm-4 col-xs-12 col-lg-pull-9 col-md-pull-9 col-sm-pull-8"><nav><div id="search"><form id="cse-search-box" action="https://google.com/cse"><input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/><input type="hidden" name="ie" value="UTF-8"/><div class="input-group custom-search-form"><input type="text" class="form-control" name="q"><span class="input-group-btn"><button class="btn btn-default" type="submit" name="sa"><span class="glyphicon glyphicon-search"></span></button></span></div></form></div><div id="recent-posts"><h3>Recent Posts</h3><ul><li><a href="/2020/12/wireguard-notes/" title="WireGuard Notes">WireGuard Notes </a></li><li><a href="/2016/02/building-virtual-machines-with-vmbuilder/" title="Building virtual machines with vmbuilder">Building virtual machines with vmbuilder </a></li><li><a href="/2016/01/oh2ewl/" title="OH2EWL">OH2EWL </a></li><li><a href="/2014/06/salt-notes/" title="Salt Notes">Salt Notes </a></li><li><a href="/2014/01/django-and-docker-a-marriage-made-in-heaven/" title="Django and Docker: a Marriage Made in Heaven">Django and Docker: a Marriage Made in Heaven </a></li></ul></div><div id="archives"><h3>Archives</h3><ul><li><a href="/2020/12/" title="December 2020">December 2020 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/02/" title="February 2016">February 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/01/" title="January 2016">January 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/06/" title="June 2014">June 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/01/" title="January 2014">January 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/12/" title="December 2013">December 2013 <span style="color: #444;">(4)</span></a></li><li><a href="/2013/07/" title="July 2013">July 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/04/" title="April 2013">April 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/11/" title="November 2012">November 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/08/" title="August 2012">August 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/07/" title="July 2012">July 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/06/" title="June 2012">June 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/05/" title="May 2012">May 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/04/" title="April 2012">April 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/03/" title="March 2012">March 2012 <span style="color: #444;">(2)</span></a></li><li><a href="/2012/02/" title="February 2012">February 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/01/" title="January 2012">January 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/12/" title="December 2011">December 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/10/" title="October 2011">October 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/08/" title="August 2011">August 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/07/" title="July 2011">July 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2011/06/" title="June 2011">June 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/05/" title="May 2011">May 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/03/" title="March 2011">March 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/02/" title="February 2011">February 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/01/" title="January 2011">January 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2010/11/" title="November 2010">November 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2010/04/" title="April 2010">April 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2009/01/" title="January 2009">January 2009 <span style="color: #444;">(2)</span></a></li><li><a href="/2008/01/" title="January 2008">January 2008 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/11/" title="November 2006">November 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/08/" title="August 2006">August 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/07/" title="July 2006">July 2006 <span style="color: #444;">(2)</span></a></li></ul></div><div id="categories"><h3>Categories</h3><ul><li><a href="/category/note/" title="note">note </a></li><li><a href="/category/snippet/" title="snippet">snippet </a></li><li><a href="/category/meta/" title="meta">meta </a></li><li><a href="/category/shoutout/" title="shoutout">shoutout </a></li><li><a href="/category/experimental/" title="experimental">experimental </a></li></ul></div><div id="contact"><h3>Contact</h3><ul><li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li><li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li><li><a href="https://twitter.com/kahara">@kahara</a></li><li><a href="https://github.com/kahara">github.com/kahara</a></li></ul></div></nav></div></div><div class="row"><div class="col-md-9 col-lg-9 col-md-offset-3 col-lg-offset-3"><footer><p class="text-center"><a href="/">Async.fi</a> 2020</p> </footer></div></div></div> <!-- container --><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-20895288-1', 'async.fi');ga('send', 'pageview');</script></body></html>

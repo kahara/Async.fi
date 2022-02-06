@@ -1,0 +1,198 @@
+<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="utf-8"><title>2012 &#8226; Async.fi</title><meta name="description" content="Posts for year 2012"><meta name="generator" content="https://github.com/kahara/Async.fi"><meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/"><link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"><!--[if lt IE 9]><script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script><script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script><![endif]--><style>*, h1 a, h2 a, h3 a, time a { color: #444; } h2 { margin-top: 0em; } article { margin-bottom: 1em; } time a { display: block; padding-bottom: 1em; } article * { max-width: 100%; } article pre, article code, article embed { overflow-x: auto; word-wrap: normal; white-space: pre; }</style></head><body><div class="container"><div class="row"><div class="col-md-12 page-header"><h1><a href="/">Async.fi</a></h1></div></div><div class="row"><div class="col-lg-9 col-md-9 col-sm-8 col-xs-12 col-lg-push-3 col-md-push-3 col-sm-push-4"><section><article class="post"><h2><a href="/2012/11/serving-per-iam-user-s3-data/" rel="bookmark" title="Permanent Link to Serving per IAM user S3 data">Serving per IAM user S3 data</a></h2><time datetime="2012-11-21T20:00:00+00:00"><a href="/2012/11/serving-per-iam-user-s3-data/" rel="bookmark" title="Permanent Link to Serving per IAM user S3 data">November 21, 2012</a></time>
+    
+    <p>
+    This isn't meant for public facing web, but a closed environment where it is necessary that each client is individually addressable (common application code, individual data). Each client has a local web server plus locally stored AWS credentials, and can therefore be fed content specific to each client. The bootstrap script is minimalistic by design, with as little moving parts as possible.
+    </p>
+
+    <p>
+    AWS credentials file (<code>init.json</code> below):
+    </p>
+    
+    <pre>
+    init({
+      "region": "eu-west-1",
+      "common_bucket": "loadres",
+      <strong>"private_bucket": "697ad820240c48929dce15c25cee8591",</strong>
+      "access_key": "AKIAILZCSDJEFUN3L53Q",
+      "secret_key": "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"
+    })
+    </pre>
+    
+    <p>
+    <code>index.html</code>:
+    </p>
+    
+    <pre>
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+      &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+        &lt;title&gt;loadres&lt;/title&gt;
+        &lt;script src="sha1.js"&gt;&lt;/script&gt; &lt;!-- https://github.com/lmorchard/S3Ajax/blob/master/js/sha1.js --&gt;
+        &lt;script&gt;
+
+          // the authenticated S3 URL maker function, without STS specific parts:
+          // http://www.async.fi/2012/07/s3-query-string-authentication-and-aws-security-token-service/
+          var s3url = function(region, bucket, key, access_key, secret_key) {
+            var expires = Math.floor(((new Date()).getTime()/1000) + 3600);
+            var string_to_sign = [
+              'GET\n\n\n',
+              expires, '\n',
+              '/', bucket, '/', key
+            ].join('');
+            var signature = b64_hmac_sha1(secret_key, string_to_sign) + '=';
+            var url = 'https://s3-' + region + '.amazonaws.com/' + bucket + '/' + key
+              + '?AWSAccessKeyId=' + encodeURIComponent(access_key)
+              + '&amp;Signature=' + encodeURIComponent(signature)
+              + '&amp;Expires=' + expires;
+            return url;
+          };
+
+          var init = function(settings) {
+            var head = document.getElementsByTagName('head')[0];
+
+            // inject prod.css
+            var css = document.createElement('link');
+            css.setAttribute('rel', 'stylesheet');
+            css.setAttribute('href', s3url(settings['region'], settings['common_bucket'], 'prod.css', settings['access_key'], settings['secret_key']));
+            head.appendChild(css);
+
+            // inject prod.js
+            var js = document.createElement('script');
+            js.setAttribute('src', s3url(settings['region'], settings['common_bucket'], 'prod.js', settings['access_key'], settings['secret_key']));
+            head.appendChild(js);
+          }
+        &lt;/script&gt;
+
+        &lt;!-- load AWS region and bucket info, plus credentials; this script calls init() (above) --&gt;
+        &lt;script src="init.json"&gt;&lt;/script&gt;
+      &lt;/head&gt;
+      &lt;body&gt;&lt;/body&gt;
+    &lt;/html&gt;
+    </pre>
+    
+    <p>
+    Now in the loaded <code>prod.js</code> file we would bring in the application code that would fetch data specific to this client (a little repetition here):
+    </p>
+    
+    <pre>
+    var expires = Math.floor(((new Date()).getTime()/1000) + 3600);
+    var string_to_sign = [
+      'GET\n\n\n',
+      expires, '\n',
+      '/', <strong>settings['private_bucket'],</strong> '/', 'data.txt'
+    ].join('');
+    var signature = b64_hmac_sha1(settings['secret_key'], string_to_sign) + '=';
+    var url = '/' + settings['private_bucket'] + '/' + 'data.txt'
+      + '?AWSAccessKeyId=' + encodeURIComponent(settings['access_key'])
+      + '&amp;Signature=' + encodeURIComponent(signature)
+      + '&amp;Expires=' + expires;
+
+    var r = new XMLHttpRequest();
+    r.open('GET', url, true);
+    r.onreadystatechange = function () {
+      if(r.readyState != 4 || r.status != 200) return;
+      alert("Success: " + r.responseText);
+    };
+    r.send();
+    </pre>
+
+    <p>
+    To make this work without <a href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a>, we're using a local proxy to handle S3 requests. In Nginx config:
+    </p>
+    
+    <pre>
+    location /697ad820240c48929dce15c25cee8591 {
+      rewrite  ^//697ad820240c48929dce15c25cee8591/(.*)$ /$1 break;
+      proxy_pass https://s3-eu-west-1.amazonaws.com/697ad820240c48929dce15c25cee8591;
+    }
+    </pre>
+    
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/iam/" rel="tag">iam</a> <a href="/tag/s3/" rel="tag">s3</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2012/08/berlin-august-2012/" rel="bookmark" title="Permanent Link to Berlin/August 2012">Berlin/August 2012</a></h2><time datetime="2012-08-28T21:00:00+00:00"><a href="/2012/08/berlin-august-2012/" rel="bookmark" title="Permanent Link to Berlin/August 2012">August 28, 2012</a></time>
+    <p>Here are some bits of information that I think might be useful for others travelling to this destination.</p>
+    
+    <h3>Fonic prepaid</h3>
+    
+    <p>I arranged, beforehand, two Fonic Prepaid SIMs from <a href="http://myworld.ebay.com/dragonxdragon">this guy</a>. Please note that while during the initial activation at <a href="http://fonic.de/">fonic.de</a> you can enter any German address in your details (I gave our rented apartment address) they will send a letter to that address and if the letter returns as non-deliverable (as happened in our case) then the prepaid will be put in “nur erreichbar” state. This means that you can receive calls and SMS, but can not place calls or send SMS or activate any of the flat rate Internet options. After contacting Fonic support, they asked for the original PIN numbers printed in SIM packaging, and also a copy (scan) of my Finnish passport. After this both SIMs were usable once again and I was able to activate the “Tagesflat” Internet option while in Germany.</p>
+    
+    <p>In addition to top-up vouchers, transferring money to your prepaid account is possible with IBAN bank transfer; see instructions <a href="http://www.prepaid-wiki.de/index.php5?title=%C3%9Cberweisung_FONIC">here</a>.</p>
+    
+    <h3>7-Tage-Karte</h3>
+
+    <p>These 7 day public transport tickets can be purchased from machines in S-Bahn/U-Bahn stations and bus/tram stops, or from a Spätkauf. As far as I know, the machines only accept cash. We got these for all zones (i.e. ABC which covers Berlin and some neighbouring towns) which cost a little over 30 euros per week.</p>
+    
+    <p>Berlin public transportation works excellently and we took a cab only occasionally (cab rides were reasonably priced too, though).</p>
+    
+    <h3>Öffi Directions</h3>
+    
+    <p>This <a href="https://play.google.com/store/apps/details?id=de.schildbach.oeffi">Android app</a> will, given two stations (or addresses), present you with a selection of best routes using any mix of the above mentioned means of transportation, often in combinations you wouldn’t have thought of by just looking at the route maps and time tables. Can not be recommended enough.</p>
+
+    <h3>Places to visit</h3>
+    
+    <p>While in no way an exhaustive list, here are some places we went to and that I find worth mentioning.</p>
+    
+    <h4>Teufelsberg</h4>
+    
+    <p>The now abandoned <a href="http://en.wikipedia.org/wiki/Teufelsberg#Listening_station">joint NSA/GCHQ listening station</a>. There was some dude claiming to represent the current owner at the gate collecting a five euro admission per person and requiring our signatures in order to avoid any legal hassles should we hurt ourselves during our exploration.</p>
+    
+    <p>There were people in the actual radomes but we just wandered around the site as climbing didn’t seem like the thing to do at the time. There is a staircase inside the main building leading up but the door leading to that staircase was locked. The key to that lock is supposedly held by the people arranging guided tours of the site.</p>
+    
+    
+    <h4>Fernsehturm</h4>
+    
+    <p>You should <a href="http://tv-turm-reservierung.de/booking/">book tickets in advance</a>, this way you’re guaranteed the next free window table at the restaurant above the observation deck (we were there on a saturday night at around eight and the place was pretty packed and we had to wait for the table for around 15 minutes). The restaurant is expensive-ish but ok, though the food is nothing to write home about. But then again people come here for the view. Old-school, professional waitresses and live music.</p>
+    
+    <h4>Sightseeing flight with Manuel</h4>
+    
+    <p>I spotted this activity from <a href="https://gidsy.com/activities/berlin/7590/60-minute-sightseeing-flight-over-berlin">Gidsy</a>. Our pilot <a href="http://www.aeroworx.de/">Manuel</a> <a href="http://goo.gl/maps/Vj5cC">flew us</a> from the <a href="http://www.flugplatzbienenfarm.de/">Bienenfarm field</a> on a small Cessna plane. Good photos.</p>
+    
+    <h4>Berliner Unterwelten</h4>
+
+    <p>These <a href="http://berliner-unterwelten.de/">tours</a> of the underground Berlin are arranged by a non-profit organisation. We took the <a href="http://berliner-unterwelten.de/tour-3.15.0.html">"Cold War”</a> tour which took us first to a big war-era bomb shelter near <a href="http://en.wikipedia.org/wiki/Berlin-Gesundbrunnen_station">Gesundbrunnen station</a> and then to a modern facility at <a href="http://en.wikipedia.org/wiki/Pankstra%C3%9Fe_(Berlin_U-Bahn)">Pankstraße station</a>. Both facilities are of course decommisioned (there wouldn't be tours if they weren't) but the guide (a Brit) gave a rather lively presentation about life in the facilities if they had ever been put to use, and the effects of nuclear war in general.</p>
+
+    <h4>Türkenmarkt</h4>
+
+    <p>Tuesdays and fridays. Looking at the prices, you could easily stock a weeks supply of vegetables here for ten euros. At the south-east end of the market there is a fresh pasta and gnocchi vendor with an excellent product (same vendor at Hackescher Markt on saturdays).</p>
+    
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/travel/" rel="tag">travel</a> <a href="/tag/prepaid/" rel="tag">prepaid</a> <a href="/tag/berlin/" rel="tag">berlin</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/note/" title="View all posts in note" rel="tag">note</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2012/07/s3-query-string-authentication-and-aws-security-token-service/" rel="bookmark" title="Permanent Link to S3 query string authentication and AWS Security Token Service">S3 query string authentication and AWS Security Token Service</a></h2><time datetime="2012-07-24T20:00:00+00:00"><a href="/2012/07/s3-query-string-authentication-and-aws-security-token-service/" rel="bookmark" title="Permanent Link to S3 query string authentication and AWS Security Token Service">July 24, 2012</a></time>
+    <p>Getting this right took some tweaking, so:</p>
+    <pre>
+// <a href="http://docs.amazonwebservices.com/AmazonS3/latest/dev/RESTAuthentication.html#RESTAuthenticationQueryStringAuth">http://docs.amazonwebservices.com/AmazonS3/latest/dev/RESTAuthentication.html#RESTAuthenticationQueryStringAuth</a>
+// <a href="http://docs.amazonwebservices.com/STS/latest/APIReference/Welcome.html">http://docs.amazonwebservices.com/STS/latest/APIReference/Welcome.html</a>
+
+var access_key = '…', secret_key = '…', session_token = '…';
+
+var expires = Math.floor(((new Date()).getTime()/1000) + 3600);
+var string_to_sign = [
+    'GET\n\n\n',
+    expires, '\n',
+    <strong>'x-amz-security-token:', session_token, '\n',</strong>
+    '/', bucket, '/', key
+].join('');
+
+// https://github.com/lmorchard/S3Ajax/blob/master/js/sha1.js
+var signature = b64_hmac_sha1(secret_key, string_to_sign) + '=';
+
+var url = key
+    + '?AWSAccessKeyId=' + encodeURIComponent(access_key)
+    + '&amp;Signature=' + encodeURIComponent(signature)
+    + '&amp;Expires=' + expires
+    <strong>+ '&amp;x-amz-security-token=' + encodeURIComponent(session_token);</strong>
+    </pre>
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/s3/" rel="tag">s3</a> <a href="/tag/javascript/" rel="tag">javascript</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2012/06/python-http-basic-authentication/" rel="bookmark" title="Permanent Link to Python/HTTP Basic Authentication">Python/HTTP Basic Authentication</a></h2><time datetime="2012-06-18T00:00:00+00:00"><a href="/2012/06/python-http-basic-authentication/" rel="bookmark" title="Permanent Link to Python/HTTP Basic Authentication">June 18, 2012</a></time>
+    <pre>
+import urllib, httplib2, base64
+
+http = httplib2.Http()
+auth = base64.encodestring(username + ':' + password)
+response, content = http.request(url, 'GET', headers={ 'Authorization' : 'Basic ' + auth })
+    </pre>
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/python/" rel="tag">python</a> <a href="/tag/http/" rel="tag">http</a> <a href="/tag/urllib/" rel="tag">urllib</a> <a href="/tag/httplib2/" rel="tag">httplib2</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/note/" title="View all posts in note" rel="tag">note</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2012/05/debian-nginx/" rel="bookmark" title="Permanent Link to Debian/Nginx">Debian/Nginx</a></h2><time datetime="2012-05-20T17:00:00+00:00"><a href="/2012/05/debian-nginx/" rel="bookmark" title="Permanent Link to Debian/Nginx">May 20, 2012</a></time>
+    <pre>
+# wget http://nginx.org/keys/nginx_signing.key
+# apt-key add nginx_signing.key
+# echo -ne "# http://wiki.nginx.org/Install\ndeb http://nginx.org/packages/debian/ squeeze nginx\ndeb-src http://nginx.org/packages/debian/ squeeze nginx\n" >>/etc/apt/sources.list
+# apt-get update
+# apt-get install nginx
+    </pre>
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/nginx/" rel="tag">nginx</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/note/" title="View all posts in note" rel="tag">note</a></p><hr class="clearfix" /></article><ul class="pager"><li><a href="/2012/page/2/" >&lt; Older Entries</a></li></ul></section></div><div class="col-lg-3 col-md-3 col-sm-4 col-xs-12 col-lg-pull-9 col-md-pull-9 col-sm-pull-8"><nav><div id="search"><form id="cse-search-box" action="https://google.com/cse"><input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/><input type="hidden" name="ie" value="UTF-8"/><div class="input-group custom-search-form"><input type="text" class="form-control" name="q"><span class="input-group-btn"><button class="btn btn-default" type="submit" name="sa"><span class="glyphicon glyphicon-search"></span></button></span></div></form></div><div id="recent-posts"><h3>Recent Posts</h3><ul><li><a href="/2020/12/wireguard-notes/" title="WireGuard Notes">WireGuard Notes </a></li><li><a href="/2016/02/building-virtual-machines-with-vmbuilder/" title="Building virtual machines with vmbuilder">Building virtual machines with vmbuilder </a></li><li><a href="/2016/01/oh2ewl/" title="OH2EWL">OH2EWL </a></li><li><a href="/2014/06/salt-notes/" title="Salt Notes">Salt Notes </a></li><li><a href="/2014/01/django-and-docker-a-marriage-made-in-heaven/" title="Django and Docker: a Marriage Made in Heaven">Django and Docker: a Marriage Made in Heaven </a></li></ul></div><div id="archives"><h3>Archives</h3><ul><li><a href="/2020/12/" title="December 2020">December 2020 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/02/" title="February 2016">February 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/01/" title="January 2016">January 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/06/" title="June 2014">June 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/01/" title="January 2014">January 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/12/" title="December 2013">December 2013 <span style="color: #444;">(4)</span></a></li><li><a href="/2013/07/" title="July 2013">July 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/04/" title="April 2013">April 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/11/" title="November 2012">November 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/08/" title="August 2012">August 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/07/" title="July 2012">July 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/06/" title="June 2012">June 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/05/" title="May 2012">May 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/04/" title="April 2012">April 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/03/" title="March 2012">March 2012 <span style="color: #444;">(2)</span></a></li><li><a href="/2012/02/" title="February 2012">February 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/01/" title="January 2012">January 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/12/" title="December 2011">December 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/10/" title="October 2011">October 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/08/" title="August 2011">August 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/07/" title="July 2011">July 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2011/06/" title="June 2011">June 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/05/" title="May 2011">May 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/03/" title="March 2011">March 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/02/" title="February 2011">February 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/01/" title="January 2011">January 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2010/11/" title="November 2010">November 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2010/04/" title="April 2010">April 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2009/01/" title="January 2009">January 2009 <span style="color: #444;">(2)</span></a></li><li><a href="/2008/01/" title="January 2008">January 2008 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/11/" title="November 2006">November 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/08/" title="August 2006">August 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/07/" title="July 2006">July 2006 <span style="color: #444;">(2)</span></a></li></ul></div><div id="categories"><h3>Categories</h3><ul><li><a href="/category/note/" title="note">note </a></li><li><a href="/category/snippet/" title="snippet">snippet </a></li><li><a href="/category/meta/" title="meta">meta </a></li><li><a href="/category/shoutout/" title="shoutout">shoutout </a></li><li><a href="/category/experimental/" title="experimental">experimental </a></li></ul></div><div id="contact"><h3>Contact</h3><ul><li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li><li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li><li><a href="https://twitter.com/kahara">@kahara</a></li><li><a href="https://github.com/kahara">github.com/kahara</a></li></ul></div></nav></div></div><div class="row"><div class="col-md-9 col-lg-9 col-md-offset-3 col-lg-offset-3"><footer><p class="text-center"><a href="/">Async.fi</a> 2020</p> </footer></div></div></div> <!-- container --><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-20895288-1', 'async.fi');ga('send', 'pageview');</script></body></html>

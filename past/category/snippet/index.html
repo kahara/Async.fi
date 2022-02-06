@@ -1,0 +1,381 @@
+<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="utf-8"><title>snippet &#8226; Async.fi</title><meta name="description" content="Posts in category snippet"><meta name="generator" content="https://github.com/kahara/Async.fi"><meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/"><link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"><!--[if lt IE 9]><script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script><script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script><![endif]--><style>*, h1 a, h2 a, h3 a, time a { color: #444; } h2 { margin-top: 0em; } article { margin-bottom: 1em; } time a { display: block; padding-bottom: 1em; } article * { max-width: 100%; } article pre, article code, article embed { overflow-x: auto; word-wrap: normal; white-space: pre; }</style></head><body><div class="container"><div class="row"><div class="col-md-12 page-header"><h1><a href="/">Async.fi</a></h1></div></div><div class="row"><div class="col-lg-9 col-md-9 col-sm-8 col-xs-12 col-lg-push-3 col-md-push-3 col-sm-push-4"><section><article class="post"><h2><a href="/2016/02/building-virtual-machines-with-vmbuilder/" rel="bookmark" title="Permanent Link to Building virtual machines with vmbuilder">Building virtual machines with vmbuilder</a></h2><time datetime="2016-02-12T20:00:00+00:00"><a href="/2016/02/building-virtual-machines-with-vmbuilder/" rel="bookmark" title="Permanent Link to Building virtual machines with vmbuilder">February 12, 2016</a></time>
+    <p>
+    After installing <code>qemu-kvm</code>, <code>libvirt-bin</code>, <code>bridge-utils</code>
+    and <code>ubuntu-vm-builder</code>, set up a bridge that virtual machines can attach to:
+    </p>
+    <pre>
+auto lo
+iface lo inet loopback
+
+auto enp2s0
+iface enp2s0 inet manual
+
+auto br0
+iface br0 inet static
+      address 192.168.0.8
+      netmask 255.255.255.0
+      gateway 192.168.0.1
+      nameserver 127.0.0.1
+      bridge_ports enp2s0
+      bridge_stp off
+      bridge_fd 0
+      bridge_maxwait 0</pre>
+
+    <p>
+    Then <code>/etc/init.d/networking restart</code>.
+    </p>
+    <p>
+    Install <code>apt-cacher</code> and give it the following config
+    in <code>/etc/apt-cacher/apt-cacher.conf</code>:
+    </p>
+    <pre>
+group = www-data
+user = www-data
+daemon_addr = 192.168.0.8
+path_map = ubuntu archive.ubuntu.com/ubuntu
+allowed_hosts = 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+ubuntu_release_names = trusty</pre>
+
+    <p>
+    The vm build script, using the local cache:
+    </p>
+    <pre>
+#!/bin/sh
+
+if [ $# -lt 2 ]; then
+    echo "usage: HOSTNAME IP"
+    exit 1
+else
+    HOSTNAME=$1
+    IP=$2
+fi
+
+firstboot=`mktemp`
+echo "#!/bin/bash" >>$firstboot
+echo "rm -f /etc/resolvconf/resolv.conf.d/{original,base,head,tail}" >>$firstboot
+echo "reboot" >>$firstboot
+chmod +x $firstboot
+
+qemu-img create -f qcow2 -o preallocation=falloc $HOME/vms/$HOSTNAME-rootdisk 4096M
+
+vmbuilder kvm ubuntu \
+  --suite trusty \
+  --verbose \
+  --libvirt qemu:///system \
+  --destdir $HOME/vms/$HOSTNAME/ \
+  --install-mirror http://192.168.0.8:3142/ubuntu \
+  --mirror http://192.168.0.8:3142/ubuntu \
+  --raw $HOME/vms/$HOSTNAME-rootdisk \
+  --rootsize 4096 \
+  --swapsize 0 \
+  --mem 128 \
+  --cpus 1 \
+  --hostname $HOSTNAME \
+  --bridge br0 \
+  --ip $IP\
+  --mask 255.255.255.0 \
+  --gw 192.168.0.1 \
+  --dns 192.168.0.8 \
+  --lang en_US.UTF-8 \
+  --timezone UTC \
+  --user ubuntu \
+  --name Ubuntu \
+  --pass ubuntu \
+  --ssh-user-key $HOME/.ssh/id_rsa.pub \
+  --addpkg linux-image-generic \
+  --addpkg openssh-server \
+  --addpkg sudo \
+  --firstboot $firstboot
+
+rm $firstboot
+rmdir $HOME/vms/$HOSTNAME/
+
+virsh autostart $HOSTNAME
+virsh start $HOSTNAME
+</pre>
+
+<p>
+<strong>Edit:</strong> To inspect and edit the virtual machine disk image, use
+<a href="http://libguestfs.org/guestfish.1.html">guestfish</a>,
+part of the
+<a href="http://libguestfs.org/">libguestfs project</a>:
+</p>
+
+<pre>
+$ sudo apt-get install libguestfs-tools
+$ guestfish --rw --add testserver-rootdisk
+
+Welcome to guestfish, the guest filesystem shell for
+editing virtual machine filesystems and disk images.
+
+Type: 'help' for help on commands
+      'man' to read the manual
+      'quit' to quit the shell
+
+&gt;&lt;fs&gt; run
+100% ⟦▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒⟧ 00:00
+&gt;&lt;fs&gt; list-filesystems
+/dev/sda1: ext4
+&gt;&lt;fs&gt; mount /dev/sda1 /
+&gt;&lt;fs&gt; emacs /etc/resolv.conf
+&gt;&lt;fs&gt; exit</pre>
+
+<p>
+<strong>Edit:</strong> Disk image pre-allocation can be done with
+QEMU-provided tools, which may or may not be a more kosher approach.
+Must investigate.
+</p>
+<pre>
+qemu-img create -f qcow2 -o preallocation=falloc $HOME/vms/$HOSTNAME-rootdisk 32768M</pre>
+
+<p>
+<strong>Edit:</strong> Fix nameserver enforcement in build script.
+</p>
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/virtualization/" rel="tag">virtualization</a> <a href="/tag/kvm/" rel="tag">kvm</a> <a href="/tag/qemu/" rel="tag">qemu</a> <a href="/tag/vmbuilder/" rel="tag">vmbuilder</a> <a href="/tag/apt-cacher/" rel="tag">apt-cacher</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2013/12/basic-mrtg-config/" rel="bookmark" title="Permanent Link to Basic MRTG config">Basic MRTG config</a></h2><time datetime="2013-12-31T09:30:00+00:00"><a href="/2013/12/basic-mrtg-config/" rel="bookmark" title="Permanent Link to Basic MRTG config">December 31, 2013</a></time>
+    <p>
+      It's a mess, but making things work took some effort, and a lot of copypasting from numerous sources, so I'm recording this here.
+    </p>
+    
+    <p>
+      <code>/etc/mrtg.cfg</code>:
+    </p>
+    
+    <pre>
+WorkDir: /var/www/mrtg
+WriteExpires: Yes
+Language: english
+Title[^]: Traffic Analysis for Yourserver
+Options[_]: growright, bits
+
+LoadMIBs: /usr/share/mibs/netsnmp/UCD-SNMP-MIB, /usr/share/mibs/ietf/TCP-MIB, /usr/share/mibs/ietf/UDP-MIB, /usr/share/mibs/ietf/HOST-RESOURCES-MIB
+
+Target[localhost.cpu]:ssCpuRawUser.0&ssCpuRawUser.0:yoursnmpcommunity@localhost+ ssCpuRawSystem.0&ssCpuRawSystem.0:yoursnmpcommunity@localhost+ ssCpuRawNice.0&ssCpuRawNice.0:yoursnmpcommunity@localhost
+RouterUptime[localhost.cpu]: yoursnmpcommunity@localhost
+MaxBytes[localhost.cpu]: 100
+Title[localhost.cpu]:  CPU Load
+PageTop[localhost.cpu]: &lt;H1&gt; Active CPU Load %&lt;/H1&gt;
+Unscaled[localhost.cpu]: ymwd
+ShortLegend[localhost.cpu]: %
+YLegend[localhost.cpu]: %
+Legend1[localhost.cpu]: %
+Legend2[localhost.cpu]:
+Legend3[localhost.cpu]:
+Legend4[localhost.cpu]:
+LegendI[localhost.cpu]: Active
+LegendO[localhost.cpu]:
+Options[localhost.cpu]: growright,nopercent
+
+Target[localhost.mem]: .1.3.6.1.4.1.2021.4.6.0&.1.3.6.1.4.1.2021.4.6.0:yoursnmpcommunity@localhost
+PageTop[localhost.mem]: &lt;H1&gt; Free Memory&lt;/H1&gt;
+Options[localhost.mem]: nopercent,growright,gauge,noo
+Title[localhost.mem]:  Free Memory
+MaxBytes[localhost.mem]: 1000000
+kMG[localhost.mem]: k,M,G,T,P,X
+YLegend[localhost.mem]: bytes
+ShortLegend[localhost.mem]: bytes
+LegendI[localhost.mem]: Free Memory:
+LegendO[localhost.mem]:
+Legend1[localhost.mem]: Free memory, not including swap, in bytes
+
+Target[localhost.swap]: memAvailSwap.0&memAvailSwap.0:yoursnmpcommunity@localhost
+PageTop[localhost.swap]: &lt;H1&gt; Swap Available&lt;/H1&gt;
+Options[localhost.swap]: growright,gauge,nopercent
+Title[localhost.swap]:  Swap Available
+MaxBytes[localhost.swap]: 1073741824
+kMG[localhost.swap]: k,M,G,T,P,X
+YLegend[localhost.swap]: bytes
+ShortLegend[localhost.swap]: bytes
+LegendI[localhost.swap]: Swap Available:
+LegendO[localhost.swap]:
+Legend1[localhost.swap]: Swap memory available
+
+Target[localhost.rootdisk]: dskPercent.1&dskPercent.1:yoursnmpcommunity@localhost
+PageTop[localhost.rootdisk]: &lt;H1&gt; Used Root Disk&lt;/H1&gt;
+Title[localhost.rootdisk]:  Used Root Disk
+MaxBytes[localhost.rootdisk]: 100
+Options[localhost.rootdisk]: nopercent,growright,gauge
+Unscaled[localhost.rootdisk]: ymwd
+ShortLegend[localhost.rootdisk]: %
+YLegend[localhost.rootdisk]: %
+
+Target[localhost.eth0]: /95.85.11.102:yoursnmpcommunity@localhost
+MaxBytes[localhost.eth0]: 12500000
+Title[localhost.eth0]:  eth0
+PageTop[localhost.eth0]: &lt;h1&gt; eth0&lt;/h1&gt;
+ShortLegend[localhost.eth0]: b/s
+YLegend[localhost.eth0]: b/s
+
+Target[localhost.eth1]: /10.129.5.83:yoursnmpcommunity@localhost
+MaxBytes[localhost.eth1]: 12500000
+Title[localhost.eth1]:  eth1
+PageTop[localhost.eth1]: &lt;h1&gt; eth1&lt;/h1&gt;
+ShortLegend[localhost.eth1]: b/s
+YLegend[localhost.eth1]: b/s
+
+Target[localhost.udpin]: udpInDatagrams.0&udpInDatagrams.0:yoursnmpcommunity@localhost
+PageTop[localhost.udpin]: &lt;H1&gt; Incoming UDP pkts per minute&lt;/H1&gt;
+Title[localhost.udpin]:  Incoming UDP pkts per minute
+MaxBytes[localhost.udpin]: 1000000
+ShortLegend[localhost.udpin]: p/m
+YLegend[localhost.udpin]: p/m
+LegendI[localhost.udpin]: Incoming
+LegendO[localhost.udpin]:
+Options[localhost.udpin]: nopercent,growright,perminute
+
+Target[localhost.udpout]: udpOutDatagrams.0&udpOutDatagrams.0:yoursnmpcommunity@localhost
+PageTop[localhost.udpout]: &lt;H1&gt; Outgoing UDP pkts per minute&lt;/H1&gt;
+Title[localhost.udpout]:  Outgoing UDP pkts per minute
+MaxBytes[localhost.udpout]: 1000000
+ShortLegend[localhost.udpout]: p/m
+YLegend[localhost.udpout]: p/m
+LegendI[localhost.udpout]:
+LegendO[localhost.udpout]: Outgoing
+Options[localhost.udpout]: nopercent,growright,perminute
+
+Target[localhost.tcpconns]: tcpCurrEstab.0&tcpCurrEstab.0:yoursnmpcommunity@localhost
+Title[localhost.tcpconns]:  TCP Connections
+PageTop[localhost.tcpconns]: &lt;H1&gt; TCP Connections&lt;/H1&gt;
+MaxBytes[localhost.tcpconns]: 10000000000
+ShortLegend[localhost.tcpconns]: conns
+YLegend[localhost.tcpconns]: conns
+LegendI[localhost.tcpconns]: Incoming
+LegendO[localhost.tcpconns]: Outgoing
+Legend1[localhost.tcpconns]: Established incoming connections
+Legend2[localhost.tcpconns]: Established outgoing connections
+Options[localhost.tcpconns]: nopercent,gauge,growright
+
+Target[localhost.tcpnewconns]: tcpPassiveOpens.0&tcpActiveOpens.0:yoursnmpcommunity@localhost
+Title[localhost.tcpnewconns]:  New TCP Connections
+PageTop[localhost.tcpnewconns]: &lt;h1&gt; New TCP Connections / minute&lt;/h1&gt;
+MaxBytes[localhost.tcpnewconns]: 1000000000
+ShortLegend[localhost.tcpnewconns]: conns/min
+YLegend[localhost.tcpnewconns]: conns/min
+LegendI[localhost.tcpnewconns]: Incoming
+LegendO[localhost.tcpnewconns]: Outgoing
+Legend1[localhost.tcpnewconns]: New inbound connections
+Legend2[localhost.tcpnewconns]: New outbound connections
+Options[localhost.tcpnewconns]: growright,nopercent,perminute
+    </pre>
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/mrtg/" rel="tag">mrtg</a> <a href="/tag/snmp/" rel="tag">snmp</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2013/12/running-a-django-app-with-gunicorn-and-upstart/" rel="bookmark" title="Permanent Link to Running a Django app with Gunicorn and Upstart">Running a Django app with Gunicorn and Upstart</a></h2><time datetime="2013-12-31T07:55:00+00:00"><a href="/2013/12/running-a-django-app-with-gunicorn-and-upstart/" rel="bookmark" title="Permanent Link to Running a Django app with Gunicorn and Upstart">December 31, 2013</a></time>
+    <p>
+      Skimmed from <a href="http://kfalck.net/2011/02/22/upstart-gunicorn-ja-virtualenv">here</a>, I mostly just changed the last line that starts <a href="http://gunicorn.org/">Gunicorn</a> from using <a href="http://docs.gunicorn.org/en/latest/run.html#gunicorn-django">gunicorn_django</a> to plain <a href="http://docs.gunicorn.org/en/latest/run.html#gunicorn">gunicorn</a>, as <a href="https://docs.djangoproject.com/en/dev/howto/deployment/wsgi/gunicorn/">recommended</a> by the Django overlords.
+    </p>
+    <p>
+      <code>/etc/init/yourapp.conf</code>:
+    </p>
+    
+    <pre>
+description "Your App"
+author "Your Name <your.name@your.domain>"
+
+start on (net-device-up and local-filesystems)
+stop on shutdown
+respawn
+
+script
+    export HOME="/root/of/django/app" <span style="font-weight: bold;"># i.e. where "manage.py" can be found</span>
+    export PATH="$PATH:/root/of/django/app/env/bin" <span style="font-weight: bold;"># "env" is our <a href="http://www.virtualenv.org/">virtualenv</a></span>
+    export DJANGO_SETTINGS_MODULE="settings"
+    export LANG="en_US.UTF-8"
+    cd $HOME
+    exec $HOME/env/bin/gunicorn -b 127.0.0.1:8000 -w 1 --log-file /var/log/gunicorn/yourapp.log app
+end script
+</pre>
+
+<p>
+  <code>app.py</code>:  
+</p>
+
+<pre>
+import os, sys
+
+sys.path.insert(0, '/root/of/django/app/')
+path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if path not in sys.path:
+    sys.path.append(path)
+
+import django.core.handlers.wsgi
+application = django.core.handlers.wsgi.WSGIHandler()
+</pre>
+
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/django/" rel="tag">django</a> <a href="/tag/gunicorn/" rel="tag">gunicorn</a> <a href="/tag/upstart/" rel="tag">upstart</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2013/07/autossh-with-ubuntu-upstart/" rel="bookmark" title="Permanent Link to Autossh with Ubuntu Upstart">Autossh with Ubuntu Upstart</a></h2><time datetime="2013-07-31T18:30:00+00:00"><a href="/2013/07/autossh-with-ubuntu-upstart/" rel="bookmark" title="Permanent Link to Autossh with Ubuntu Upstart">July 31, 2013</a></time>
+    <p>
+      Like the title says, the point of this post is getting <a href="http://www.harding.motd.ca/autossh/">autossh</a> up when Ubuntu boots. Place this in e.g. <code>/etc/init/autossh.conf</code>, after which you will be
+      able to says things like <code>sudo start autossh</code> and <code>sudo stop autossh</code>.
+    </p>
+
+    <pre>
+    description "autossh tunnel"
+    author "Joni Kähärä <joni.kahara@async.fi>"
+	
+    start on (local-filesystems and net-device-up IFACE=eth0 and net-device-up IFACE=eth1) # assuming we have multiple interfaces
+    stop on runlevel [016]
+	
+    respawn
+    respawn limit 5 60
+	
+    exec autossh -M 0 -N -R 10000:192.168.1.1:22 -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3" -o "StrictHostKeyChecking=no" -o "BatchMode=yes" -i /home/user/.ssh/id_rsa username@hostname
+    </pre>
+      
+      <p>
+	The “start on” line ensures that autossh won’t start before all network interfaces are up, and “stop on” will stop autossh (if it’s running) on runlevels 0, 1 and 6 (halt, single user and reboot, respectively). The “respawn limit” line will ensure that if autossh goes crazy, it will not be started again. Note that the plain “respawn” line is still needed to actually respawn the process.
+	
+	Of the command line options only the first one (-M 0) is for autossh, the rest are regular ssh options.
+	
+	<ul>
+	  <li>-M 0 denotes that autossh should not set up it’s own monitoring channel and should instead rely on ssh terminating itself when it decides that the connection’s been lost (see ServerAlive* options below).</li>
+	  <li>-N means “Do not execute a remote command”, i.e. just set up the connection and port forward.</li>
+	  <li>-R 10000:192.168.1.1:22 means that we want TCP port 10000 on the remote host forwarded to port 22 on local host (192.168.1.1).</li>
+	  <li>-o "ServerAliveInterval 60" send “keepalive” messages every 60 seconds</li>
+	  <li>-o "ServerAliveCountMax 3" terminate ssh if three consecutive ServerAliveInterval inquiries fail (and thus respawn)</li>
+	  <li>-o "StrictHostKeyChecking=no" don’t fail if remote server’s identity changed</li>
+	  <li>-o "BatchMode=yes" don’t attempt to use a passphrase if public key login fails</li>
+	  <li>-i /home/user/.ssh/id_rsa the private key we’ll use for the tunnel</li>
+	  <li>username@hostname connect to this host with this username</li>
+	</ul>
+      </p>
+      
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/upstart/" rel="tag">upstart</a> <a href="/tag/ssh/" rel="tag">ssh</a> <a href="/tag/autossh/" rel="tag">autossh</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2013/04/amazon-dynamodb/" rel="bookmark" title="Permanent Link to Amazon DynamoDB basics with Boto">Amazon DynamoDB basics with Boto</a></h2><time datetime="2013-04-26T10:00:00+00:00"><a href="/2013/04/amazon-dynamodb/" rel="bookmark" title="Permanent Link to Amazon DynamoDB basics with Boto">April 26, 2013</a></time>
+    <p>
+      The code assumes that <a href="https://github.com/boto/boto">Boto</a> credentials have been <a href="https://code.google.com/p/boto/wiki/BotoConfig">set up</a>.
+    </p>
+    <pre>
+      import boto.dynamodb
+      from boto.dynamodb.condition import *
+      
+      connection =  boto.dynamodb.connect_to_region('eu-west-1')
+      table = connection.get_table('table')
+      
+      id = '1'
+      timestamp = 1234
+      attrs = {
+        'key1': 'value1',
+        'key2': set(['value2', 'value3'])
+      }
+      
+      # create
+      item = table.new_item(hash_key=id, range_key=timestamp, attrs=attrs)
+      item.put()
+      
+      # read
+      item = table.get_item(hash_key=id)      
+      key2 = list(item['key2'])
+      
+      # update
+      item['key1'] = 'foo'
+      item['key3'] = 'bar'
+      item.put()
+      
+      # query
+      table.query(hash_key=id, range_key_condition=LT(1500))
+      
+      # scan
+      table.scan(scan_filter={'key1': EQ('foo')})
+      
+      # delete
+      item = table.get_item(hash_key=id)
+      item.delete()
+      
+    </pre>
+    
+    <p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/dynamodb/" rel="tag">dynamodb</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><ul class="pager"><li><a href="/category/snippet/page/2/" >&lt; Older Entries</a></li></ul></section></div><div class="col-lg-3 col-md-3 col-sm-4 col-xs-12 col-lg-pull-9 col-md-pull-9 col-sm-pull-8"><nav><div id="search"><form id="cse-search-box" action="https://google.com/cse"><input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/><input type="hidden" name="ie" value="UTF-8"/><div class="input-group custom-search-form"><input type="text" class="form-control" name="q"><span class="input-group-btn"><button class="btn btn-default" type="submit" name="sa"><span class="glyphicon glyphicon-search"></span></button></span></div></form></div><div id="recent-posts"><h3>Recent Posts</h3><ul><li><a href="/2020/12/wireguard-notes/" title="WireGuard Notes">WireGuard Notes </a></li><li><a href="/2016/02/building-virtual-machines-with-vmbuilder/" title="Building virtual machines with vmbuilder">Building virtual machines with vmbuilder </a></li><li><a href="/2016/01/oh2ewl/" title="OH2EWL">OH2EWL </a></li><li><a href="/2014/06/salt-notes/" title="Salt Notes">Salt Notes </a></li><li><a href="/2014/01/django-and-docker-a-marriage-made-in-heaven/" title="Django and Docker: a Marriage Made in Heaven">Django and Docker: a Marriage Made in Heaven </a></li></ul></div><div id="archives"><h3>Archives</h3><ul><li><a href="/2020/12/" title="December 2020">December 2020 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/02/" title="February 2016">February 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/01/" title="January 2016">January 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/06/" title="June 2014">June 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/01/" title="January 2014">January 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/12/" title="December 2013">December 2013 <span style="color: #444;">(4)</span></a></li><li><a href="/2013/07/" title="July 2013">July 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/04/" title="April 2013">April 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/11/" title="November 2012">November 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/08/" title="August 2012">August 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/07/" title="July 2012">July 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/06/" title="June 2012">June 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/05/" title="May 2012">May 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/04/" title="April 2012">April 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/03/" title="March 2012">March 2012 <span style="color: #444;">(2)</span></a></li><li><a href="/2012/02/" title="February 2012">February 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/01/" title="January 2012">January 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/12/" title="December 2011">December 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/10/" title="October 2011">October 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/08/" title="August 2011">August 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/07/" title="July 2011">July 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2011/06/" title="June 2011">June 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/05/" title="May 2011">May 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/03/" title="March 2011">March 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/02/" title="February 2011">February 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/01/" title="January 2011">January 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2010/11/" title="November 2010">November 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2010/04/" title="April 2010">April 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2009/01/" title="January 2009">January 2009 <span style="color: #444;">(2)</span></a></li><li><a href="/2008/01/" title="January 2008">January 2008 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/11/" title="November 2006">November 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/08/" title="August 2006">August 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/07/" title="July 2006">July 2006 <span style="color: #444;">(2)</span></a></li></ul></div><div id="categories"><h3>Categories</h3><ul><li><a href="/category/note/" title="note">note </a></li><li><a href="/category/snippet/" title="snippet">snippet </a></li><li><a href="/category/meta/" title="meta">meta </a></li><li><a href="/category/shoutout/" title="shoutout">shoutout </a></li><li><a href="/category/experimental/" title="experimental">experimental </a></li></ul></div><div id="contact"><h3>Contact</h3><ul><li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li><li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li><li><a href="https://twitter.com/kahara">@kahara</a></li><li><a href="https://github.com/kahara">github.com/kahara</a></li></ul></div></nav></div></div><div class="row"><div class="col-md-9 col-lg-9 col-md-offset-3 col-lg-offset-3"><footer><p class="text-center"><a href="/">Async.fi</a> 2020</p> </footer></div></div></div> <!-- container --><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-20895288-1', 'async.fi');ga('send', 'pageview');</script></body></html>

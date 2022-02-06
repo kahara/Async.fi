@@ -1,0 +1,81 @@
+<!doctype HTML>
+<html>
+  <head>
+    <title>Beacon</title>
+    <style>
+      table thead tr th { text-align: left; padding-right: 4em; }
+      table tbody tr td { vertical-align: top; }
+    </style>
+  </head>
+  <body>
+    <div id="usage">
+      <h1>Beacon</h1>
+      <p>
+	Beacon acts as a visual or/and audible morse beacon. When called with an empty query string, this page will show this usage.
+      </p>
+      <p>
+	Beacon accepts the following query string parameters, of which only <code>m</code> (<em>message</em>) is required:
+      </p>
+      <table>
+	<thead>
+	  <tr>
+	    <th>Parameter</th>
+	    <th>Meaning</th>
+	    <th>Default</th>
+	    <th>Remarks</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <tr>
+	    <td><code>m</code></td>
+	    <td>Message (a..z, 0..9)</td>
+	    <td>(none)</td>
+	    <td>A message is required and no default is provided</td>
+	  </tr>
+	  <tr>
+	    <td><code>a</code></td>
+	    <td>Enable audio signal</td>
+	    <td>0</td>
+	    <td></td>
+	  </tr>
+	  <tr>
+	    <td><code>v</code></td>
+	    <td>Enable video signal</td>
+	    <td>1</td>
+	    <td></td>
+	  </tr>
+	  <tr>
+	    <td><code>t</code></td>
+	    <td>Dot (or "dit") length in milliseconds</td>
+	    <td>50</td>
+	    <td>Dash (or "dah") length is three dot lengths; gap between dots and dashes is one dot; gap between letters is three dots; gap between words is seven dots; see <a href="http://en.wikipedia.org/wiki/Morse_code#Representation.2C_timing_and_speeds">Wikipedia</a></td>
+	  </tr>
+	  <tr>
+	    <td><code>f</code></td>
+	    <td>Audio signal frequency in hertz</td>
+	    <td>700</td>
+	    <td></td>
+	  </tr>
+	  <tr>
+	    <td><code>c</code></td>
+	    <td>Video signal color as a (hex) RGB value</td>
+	    <td>ffffff</td>
+	    <td></td>
+	  </tr>
+	</tbody>
+      </table>
+      <h2>Examples</h2>
+      <p>Silently morse the message "I AM THE WALRUS":</p>
+      <code><a href="?m=i%20am%20the%20walrus">?m=i%20am%20the%20walrus</a></code>
+      <p>Use green signal color:</p>
+      <code><a href="?m=i%20am%20the%20walrus&amp;c=00ff00">?m=i%20am%20the%20walrus&amp;c=00ff00</a></code>
+      <p>Same message, this time also beep:</p>
+      <code><a href="?m=i%20am%20the%20walrus&amp;a=1">?m=i%20am%20the%20walrus&amp;a=1</a></code>
+      <p>Lower audio pitch:</p>
+      <code><a href="?m=i%20am%20the%20walrus&amp;a=1&amp;f=600">?m=i%20am%20the%20walrus&amp;a=1&amp;f=600</a></code>
+    </div>
+    <div id="beacon" style="display: none; background: black; margin: 0; position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%); width: 100%; height: 100%;">
+    </div>
+    <script src="beacon.js"></script>
+  </body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="utf-8"><title>  Async.fi</title><meta name="description" content="Joni Kähärä Presents Async.fi"><meta name="generator" content="https://github.com/kahara/Async.fi"><meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/"><link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"><!--[if lt IE 9]><script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script><script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script><![endif]--><style>*, h1 a, h2 a, h3 a, time a { color: #444; } h2 { margin-top: 0em; } article { margin-bottom: 1em; } time a { display: block; padding-bottom: 1em; } article * { max-width: 100%; } article pre, article code, article embed { overflow-x: auto; word-wrap: normal; white-space: pre; }</style></head><body><div class="container"><div class="row"><div class="col-md-12 page-header"><h1><a href="/">Async.fi</a></h1></div></div><div class="row"><div class="col-lg-9 col-md-9 col-sm-8 col-xs-12 col-lg-push-3 col-md-push-3 col-sm-push-4"><section><article class="post"><h2><a href="/2011/05/reading-ec2-tags-with-boto/" rel="bookmark" title="Permanent Link to Reading EC2 tags with Boto">Reading EC2 tags with Boto</a></h2><time datetime="2011-05-29T14:33:04+00:00"><a href="/2011/05/reading-ec2-tags-with-boto/" rel="bookmark" title="Permanent Link to Reading EC2 tags with Boto">May 29, 2011</a></time><strong>(Ouch! Looks like WordPress update to 3.1.3 wiped all the modifications I made to the default theme. Admittedly I should've seen that coming.)</strong>
+
+What I want to do is basically attach a key-value pair to an EC2 instance when launching it in AWS Management Console and read the value inside the instance when it's running. To be more specific, I use this to to set a key called <code>environment</code> that can have values like <code>dev</code>, <code>stage</code> and <code>prod</code> so that the Django config can decide which database to connect to etc. while starting up. I suspect that in Boto the current instance can somehow be referenced in a more direct fashion but this works as well.
+
+First, append the following to <code>/etc/profile</code>:
+<pre># See: http://stackoverflow.com/questions/625644/find-out-the-instance-id-from-within-an-ec2-machine
+export EC2_INSTANCE_ID="`wget -q -O - http://169.254.169.254/latest/meta-data/instance-id || die \"wget instance-id has failed: $?\"`"
+test -n "$EC2_INSTANCE_ID" || die 'cannot obtain instance-id'
+export EC2_AVAIL_ZONE="`wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone || die \"wget availability-zone has failed: $?\"`"
+test -n "$EC2_AVAIL_ZONE" || die 'cannot obtain availability-zone'
+export EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\\([0-9][0-9]*\\)[a-z]*\\$:\\\\1:'`"</pre>
+Now we know the region and instance ID. Next, install <a href="http://boto.cloudhackers.com/">Boto</a> by running the following commands:
+<pre>wget "http://boto.googlecode.com/files/boto-2.0b4.tar.gz"
+zcat boto-2.0b4.tar.gz | tar xfv -
+cd boto-2.0b4
+python ./setup.py install</pre>
+Then, add these lines to <code>~/.profile</code>:
+<pre>export AWS_ACCESS_KEY_ID=&lt;ACCESS_KEY&gt;
+export AWS_SECRET_ACCESS_KEY=&lt;SECRET_KEY&gt;</pre>
+Or the equivalent in <code>~/.boto</code>:
+<pre>[Credentials]
+aws_access_key_id = &lt;ACCESS_KEY&gt;
+aws_secret_access_key = &lt;SECRET_KEY&gt;</pre>
+Now, to read the tag we want in Python:
+<pre>#!/usr/bin/env python                                                                                                                                           
+
+import os
+from boto import ec2
+
+ec2_instance_id = os.environ.get('EC2_INSTANCE_ID')
+ec2_region = os.environ.get('EC2_REGION')
+
+conn = ec2.connect_to_region(ec2_region)
+
+reservations = conn.get_all_instances()
+instances = [i for r in reservations for i in r.instances]
+
+for instance in instances:
+    if instance.__dict__['id'] == ec2_instance_id:
+        print instance.__dict__['tags']['environment']</pre><p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/boto/" rel="tag">boto</a> <a href="/tag/django/" rel="tag">django</a> <a href="/tag/ec2/" rel="tag">ec2</a> <a href="/tag/python/" rel="tag">python</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/05/verifying-amazon-sns-messages-with-php/" rel="bookmark" title="Permanent Link to Verifying Amazon SNS Messages with PHP">Verifying Amazon SNS Messages with PHP</a></h2><time datetime="2011-05-14T14:21:01+00:00"><a href="/2011/05/verifying-amazon-sns-messages-with-php/" rel="bookmark" title="Permanent Link to Verifying Amazon SNS Messages with PHP">May 14, 2011</a></time>Messages sent by <a href="http://aws.amazon.com/sns/">Amazon Simple Notification Service</a> are signed, and checking that any received message is indeed from AWS and not from some douche trying to outsmart you is not very hard (nor should it be optional, for that matter):
+
+<a href="/media/2011/05/sns-verify.php_1.txt">sns-verify.php</a>
+
+The <code>verify_sns()</code> function expects the message in JSON format, plus region (e.g. "eu-west-1"), numerical account ID without dashes and an array containing the topics you're interested in. The code will verify both <code>SubscriptionConfirmation</code> and <code>Notification</code> messages. It loads the certificate from the address in <code>SigningCertURL</code> field  to check against for each message separately because the certificate changes over time, as described <a href="https://forums.aws.amazon.com/ann.jspa?annID=882">here</a>. It is also checked that the host where the certificate is loaded from is in the amazonaws.com domain.
+
+Example usage where subscriptions are automatically confirmed:
+
+<pre>
+require_once('sns-verify.php');
+
+if($_SERVER['REQUEST_METHOD'] != 'POST') {
+    logger('Not POST request, quitting');
+    exit();
+}
+
+$post = file_get_contents('php://input');
+
+if(!verify_sns($post, 'REGION', 'ACCOUNT', array('TOPIC 1', 'TOPIC 2'))) {
+    exit;
+}
+
+$msg = json_decode($post);
+
+
+if($msg->Type == 'SubscriptionConfirmation') {
+    logger('SNS SubscriptionConfirmation received);
+    file_get_contents($msg->SubscribeURL);
+} elseif($msg->Type == 'Notification') {
+    logger('SNS Notification received);
+    process_message($msg);
+}
+</pre><p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/php/" rel="tag">php</a> <a href="/tag/sns/" rel="tag">sns</a> <a href="/tag/x-509/" rel="tag">x-509</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/05/windows-server-2008-r2-on-amazon-ec2/" rel="bookmark" title="Permanent Link to Windows Server 2008 R2 on Amazon EC2">Windows Server 2008 R2 on Amazon EC2</a></h2><time datetime="2011-05-08T18:26:23+00:00"><a href="/2011/05/windows-server-2008-r2-on-amazon-ec2/" rel="bookmark" title="Permanent Link to Windows Server 2008 R2 on Amazon EC2">May  8, 2011</a></time><a href="/media/2011/05/20110508-xdjdyit8w4hg3dbicwu8gged68.png"><img class="alignleft size-full wp-image-641" title="Windows Server 2008 R2 on Amazon EC2 Micro Instance" src="/media/2011/05/20110508-xdjdyit8w4hg3dbicwu8gged68.png" alt="" width="1440" height="937" /></a>
+
+Plan to use an in-house box to run a <a href="https://async.fi/2011/03/xenserver-hosting-paravirtual-64-bit-ubuntu-10-04-guests/">XenServer</a> to host XP instances (I need multiple Windows desktops for "testing" purposes if anyone asks) had to be scrapped because the box was simply too loud and I couldn't get the <a href="https://async.fi/2011/05/building-a-wds-bridge-with-consumer-grade-wlan-aps/">wireless bridge to work</a> &#8211; not that the latter would have helped anyway because like I said the box really is loud and relocating it anywhere inside our flat just wouldn't lower the noise level enough for it to not disturb sleep.
+
+Which brings us here: launching a Windows Server 2008 R2 instance on Amazon EC2 and setting up Remote Desktop Services to enable multiple simultaneous client sessions. Below we can see Alice, Bob, Charlie and Dave each happily running their own Remote Desktop session at the same time:
+
+<a href="/media/2011/05/20110508-8d6fgppd1h5ejehpqun8cu9hhu.png"><img class="alignleft size-full wp-image-656" title="Alice, Bob, Charlie and Dave" src="/media/2011/05/20110508-8d6fgppd1h5ejehpqun8cu9hhu.png" alt="" width="1678" height="1049" /></a>
+
+&nbsp;
+
+The whole thing runs "tolerably" smoothly even on the severely memory-limited Micro Instace:
+
+<a href="/media/2011/05/20110508-dmhedmbyncijb81pkqu12d2d19.png"><img class="aligncenter size-full wp-image-663" title="Taskmgr" src="/media/2011/05/20110508-dmhedmbyncijb81pkqu12d2d19.png" alt="" width="403" height="446" /></a>
+
+At $0.035 per hour this can be considered cheap. And, the server can be shut down when it's not needed in which case the only charge will be for the admittedly humonguos (35 gigabytes) Windows root partition. And of course those clients would need Client Access Licenses which adds a one time cost of roughly $100 per client. Now, to directly compare this kind of setup with having an actual physical server would indicate poor judgement as both have their strong and weak points but costs can be compared. So here we have an estimate of what the total cost of running a server like this for a three-year period would be, <em>sans</em> CALs:
+<table>
+<tbody>
+<tr>
+<th></th>
+<th>On-Demand EC2</th>
+<th>Reserved EC2
+(1-year Contract)</th>
+<th>Reserved EC2
+(3-year Contract)</th>
+</tr>
+<tr>
+<td>One-time costs</td>
+<td>$0.00</td>
+<td>$54.00</td>
+<td>$82.00</td>
+</tr>
+<tr>
+<td>Compute</td>
+<td>$922.32</td>
+<td>$421.56</td>
+<td>$421.56</td>
+</tr>
+<tr>
+<td>Storage (35 GB)</td>
+<td>$138.60</td>
+<td>$138.60</td>
+<td>$138.60</td>
+</tr>
+<tr>
+<td>I/O (10 IOPS)</td>
+<td>$103.00</td>
+<td>$103.00</td>
+<td>$103.00</td>
+</tr>
+<tr>
+<td>Transfer In (1 GB/m)</td>
+<td>$3.60</td>
+<td>$3.60</td>
+<td>$3.60</td>
+</tr>
+<tr>
+<td>Transfer Out (10 GB/m)</td>
+<td>$48.60</td>
+<td>$48.60</td>
+<td>$48.60</td>
+</tr>
+<tr>
+<td>Total Cost (Euros)</td>
+<td><strong>849.69 &#8364;</strong></td>
+<td><strong>613.00 &#8364;</strong></td>
+<td><strong>557.11 &#8364;</strong></td>
+</tr>
+<tr>
+<td>Per Month (Euros)</td>
+<td><strong>23.60 &#8364;</strong></td>
+<td><strong>17.03 &#8364;</strong></td>
+<td><strong>15.48 &#8364;</strong></td>
+</tr>
+</tbody>
+</table>
+Source: <a href="http://calculator.s3.amazonaws.com/calc5.html">http://calculator.s3.amazonaws.com/calc5.html</a>
+
+Then again, that 600 &#8364; would get you two HP Proliant MicroServers. Yet, then again, that price does not include Windows licenses and they would need a physical location, electricity, an Internet connection &#8211; an so on.<p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/ebs/" rel="tag">ebs</a> <a href="/tag/ec2/" rel="tag">ec2</a> <a href="/tag/pricing/" rel="tag">pricing</a> <a href="/tag/remote-desktop-services/" rel="tag">remote-desktop-services</a> <a href="/tag/windows-server-2008-r2/" rel="tag">windows-server-2008-r2</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/experimental/" title="View all posts in experimental" rel="tag">experimental</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/05/building-a-wds-bridge-with-consumer-grade-wlan-aps/" rel="bookmark" title="Permanent Link to Building a WDS Bridge with Consumer Grade WLAN APs">Building a WDS Bridge with Consumer Grade WLAN APs</a></h2><time datetime="2011-05-08T10:09:45+00:00"><a href="/2011/05/building-a-wds-bridge-with-consumer-grade-wlan-aps/" rel="bookmark" title="Permanent Link to Building a WDS Bridge with Consumer Grade WLAN APs">May  8, 2011</a></time><a href="/media/2011/04/a-link.jpg"><img class="alignleft size-full wp-image-543" title="a-link" src="/media/2011/04/a-link.jpg" alt="" width="100%" /></a>
+
+Small AP is small &#8211; and has a built-in antenna, too. I got two of <a href="http://store.a-link.com/fi/WNA.html">these</a> (for 19,90&#8364; per piece &#8211; not A-link list price&#8230;) and set up a bridge so I could relocate my noisy <a href="https://async.fi/2011/03/xenserver-hosting-paravirtual-64-bit-ubuntu-10-04-guests/">Xen box</a> from living room to kitchen to keep the box running 24/7 <em>and</em> sleep. (Turns out that in the end even this didn't help because the box remained loud enough to disturb sleep no matter what settings were selected in BIOS thermal management.) Initially it looked like the bridge worked just fine, except my testing revealed that the transmission speed was nowhere near the advertised "IEEE 802.11n (draft 2.0) / 150Mb":
+
+<pre>
+XenCenter.iso              100%   44MB   1.5MB/s   00:29
+</pre>
+
+After trying different cryptos from WPA2 to plain text and fiddling with various other settings I came to the conclusion that the slow speed was a <em>feature</em> of the device. Anyway, this was not really any kind of concern as I was more interested in latency, which was low enough (a few milliseconds). Put all this together and my opinion is that it's good enough for an access point that is about the size of a deck of cards and costs twenty euros.
+
+What did turn out to be a problem is that at times the AP's would somehow manage get a broadcast storm going on, which of course  took the wired network down with it very quickly. I wasn't really able to get to the root of this but from what I observed I can tell that the broadcast storm would happen even when one AP was connected to the primary wired segment and the AP at the other end was just "floating" there, with nothing connected to its' Ethernet ports. Also, while after enabling STP in the devices I could, using <code>tcpdump</code>, observe the STP config packets doing their thing and reconfiguring after for example dropping and then reconnecting either end of the bridge, this (STP) did nothing to prevent the broadcast storm from happening. I should also note for the record that I was using the "WDS", not "AP+WDS" mode. 
+
+Verdict: the devices just aren't suitable for this application, i.e. they are buggy and do not fully work as advertised but given their relatively compact size and ability to function as clients on a WLAN, I'll keep these.<p class="tags"><strong>Tagged with:</strong> <a href="/tag/stp/" rel="tag">stp</a> <a href="/tag/wds/" rel="tag">wds</a> <a href="/tag/wlan/" rel="tag">wlan</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/experimental/" title="View all posts in experimental" rel="tag">experimental</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/03/xenserver-hosting-paravirtual-64-bit-ubuntu-10-04-guests/" rel="bookmark" title="Permanent Link to XenServer hosting paravirtual 64-bit Ubuntu 10.04 guests">XenServer hosting paravirtual 64-bit Ubuntu 10.04 guests</a></h2><time datetime="2011-03-26T20:14:02+00:00"><a href="/2011/03/xenserver-hosting-paravirtual-64-bit-ubuntu-10-04-guests/" rel="bookmark" title="Permanent Link to XenServer hosting paravirtual 64-bit Ubuntu 10.04 guests">March 26, 2011</a></time><a rel="lightbox" href="/media/2011/03/xencenter.png"><img src="/media/2011/03/xencenter1.png" alt="XenCenter" title="XenCenter" width="100%" class="alignleft size-full wp-image-477" /></a>
+
+While looking for a virtualization solution in order to make computational matters more flexible, efficient and manageable (et cetera, et cetera) here at home, various offerings that are listed below were tested. To be honest, to say that I "tested" these would be twisting the truth quite a bit as the methodology used was not very scientific and things were guided more by hunch than strict reason. But then again as I would be the only one who would get hurt if things went horribly wrong it wouldn't really matter that much if the "wrong" solution was chosen. So far, after a few days, it's looking like the choice I made was right. The following took part in our non-scientific non-review:
+
+<ul>
+	<li><a href="http://open.eucalyptus.com/">Eucalyptus</a> <a href="http://www.ubuntu.com/business/cloud/overview">(Ubuntu Enterprise Cloud)</a></li>
+	<li><a href="http://www.parallels.com/eu/products/server/baremetal/">Parallels Server 4 Bare Metal Edition</a></li>
+	<li><a href="http://www.vmware.com/products/vsphere-hypervisor/overview.html">VMware vSphere Hypervisor&#8482; (ESXi)</a></li>
+	<li><a href="http://www.citrix.com/English/ps2/products/product.asp?contentID=683148">XenServer Free Edition</a></li>
+</ul>
+
+At first Eucalyptus sounded like an awesome choise, given for example its Amazon EC2 API compatibility, but in practice it turned out that while the idea of having a private cloud at one's disposal is great, having this much flexibility brings with it a much higher level of complexity in managing the system, which pretty much makes the whole idea of having a cloud a moot point. And as I have just one host machine, running Eucalytus wasn't as straightforward as it could be. And also, what I'm really looking for is virtualization of a couple of servers that I like to have around, not a pool of cloud computing resources which can these days be bought at very reasonable rates (or for <a href="http://aws.amazon.com/free/">free</a>, even) if needed. Nice offering, though, which I bet we will see gaining more and more ground in the future. Oddly, I'm unable to find a single service provider offering a service similar to EC2, but built on top of Eucalyptus. Perhaps the tools that would facilitate selling an Eucalyptus-based cloud service do not yet exist?
+
+As for Parallels, I think it's debatable just how "bare metal" their hypervisor really is. It may be so that I have let myself be enchanted by marketers to believe that this bare metal thing is something radically different. The other possibility is that Parallels themselves are bending the meaning of the term here and are selling their system as "bare metal" when in fact it's not that bare. At least to me it looked like a full host operating system was installed and I can't see how this makes things that much different from having a regular server and running the hypervisor on it. Of course one difference is that you don't need for example a Windows server license to run the software but there's still a regular operating system involved that's running the show. Don't get me wrong, I use Parallels products almost on a daily basis (for example the illustration image on top, of the XenCenter management tool, is running on Windows XP installation inside a Parallels Desktop for Mac virtual machine) and I have nothing against them, it's just that this personal experience I have with their server offering wasn't that super. Their management tools are cross-platform (all three Windows, Mac, Linux) which is a plus but they want $500 for a license per server which I'm not going to pay them. Also, Parallels Server could be considered somewhat obscure in comparison to the others so this may very well turn out to not be a good choice in the long run.
+
+VMWare's offer just wouldn't work for some reason, perhaps my hardware was somehow incompatible. Or something, I don't know. VMWare being such a traditional virtualization house, this would've been the "correct" choice in a similar way to <em>"No manager ever got fired for buying IBM"</em>. But as no one was going to fire me for whatever choice I made here I gave up and moved on.
+
+Last on the table was XenServer from Citrix. I went with the default installation and just used one whole disk and let the installer set things up the default way, i.e. a few gigabytes for all the Xen stuff and the rest for LVM storage. Like rest, the system can be managed from command line (local console or over SSH) but as my primary aim here is to get things done and having a point and click interface makes learning curve that much less steep, I went and installed the XenCenter management console on a Windows XP virtual machine (which was of course not hosted on this machine).
+
+Making a <a href="http://en.wikipedia.org/wiki/Paravirtualization">paravirtual</a> Ubuntu guest did not require any kind of wizardy, I just followed steps 3&ndash;5 in <a href="http://community.citrix.com/display/xs/Installing+Ubuntu+Server+10.04+%2832bit+and+64bit%29+LTS/"><em>Installing Ubuntu Server 10.04 (32bit and 64bit) LTS</em></a> (steps 1 and 2 were not necessary as the Ubuntu 10.04 64-bit template was already there after a fresh install). After I had one machine set up I turned that in to a virtual machine template and using this template it's super-fast to start new servers when needed. Also, these (para)virtual machines don't seem to be taking much of a performance hit and all and all I'm really pleased with the results.
+
+The only thing missing here is <a href="http://www.lm-sensors.org/">lm-sensors</a> or something similar so that I could at least see CPU and motherboard temperatures of a running system but I suppose this can be arranged.
+
+<strong>Update:</strong> A Windows XP guest, with paravirtual device drivers, was also easy enough to <a href="http://docs.vmd.citrix.com/XenServer/5.6.0fp1/1.0/en_gb/guest.html#install_windows">install</a>. And following the instructions in chapter <a href="http://docs.vmd.citrix.com/XenServer/5.6.0fp1/1.0/en_gb/guest.html#clone_considerations_Windows">3.4. "Preparing to clone a Windows VM"</a>, working with Redmond is greatly simplified as an XP template can be prepared and new virtual machines invoked on demand and disposed of after use &ndash; this way one doesn't have to worry if for example installing a software package for testing purposes will mess the system up somehow.<p class="tags"><strong>Tagged with:</strong> <a href="/tag/paravirtualization/" rel="tag">paravirtualization</a> <a href="/tag/ubuntu/" rel="tag">ubuntu</a> <a href="/tag/windows/" rel="tag">windows</a> <a href="/tag/xen/" rel="tag">xen</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/shoutout/" title="View all posts in shoutout" rel="tag">shoutout</a></p><hr class="clearfix" /></article><ul class="pager"><li><a href="/page/9/" >&lt; Older Entries</a></li><li><a href="/page/7/" >Newer Entries &gt;</a></li></ul></section></div><div class="col-lg-3 col-md-3 col-sm-4 col-xs-12 col-lg-pull-9 col-md-pull-9 col-sm-pull-8"><nav><div id="search"><form id="cse-search-box" action="https://google.com/cse"><input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/><input type="hidden" name="ie" value="UTF-8"/><div class="input-group custom-search-form"><input type="text" class="form-control" name="q"><span class="input-group-btn"><button class="btn btn-default" type="submit" name="sa"><span class="glyphicon glyphicon-search"></span></button></span></div></form></div><div id="recent-posts"><h3>Recent Posts</h3><ul><li><a href="/2020/12/wireguard-notes/" title="WireGuard Notes">WireGuard Notes </a></li><li><a href="/2016/02/building-virtual-machines-with-vmbuilder/" title="Building virtual machines with vmbuilder">Building virtual machines with vmbuilder </a></li><li><a href="/2016/01/oh2ewl/" title="OH2EWL">OH2EWL </a></li><li><a href="/2014/06/salt-notes/" title="Salt Notes">Salt Notes </a></li><li><a href="/2014/01/django-and-docker-a-marriage-made-in-heaven/" title="Django and Docker: a Marriage Made in Heaven">Django and Docker: a Marriage Made in Heaven </a></li></ul></div><div id="archives"><h3>Archives</h3><ul><li><a href="/2020/12/" title="December 2020">December 2020 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/02/" title="February 2016">February 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/01/" title="January 2016">January 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/06/" title="June 2014">June 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/01/" title="January 2014">January 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/12/" title="December 2013">December 2013 <span style="color: #444;">(4)</span></a></li><li><a href="/2013/07/" title="July 2013">July 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/04/" title="April 2013">April 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/11/" title="November 2012">November 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/08/" title="August 2012">August 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/07/" title="July 2012">July 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/06/" title="June 2012">June 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/05/" title="May 2012">May 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/04/" title="April 2012">April 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/03/" title="March 2012">March 2012 <span style="color: #444;">(2)</span></a></li><li><a href="/2012/02/" title="February 2012">February 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/01/" title="January 2012">January 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/12/" title="December 2011">December 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/10/" title="October 2011">October 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/08/" title="August 2011">August 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/07/" title="July 2011">July 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2011/06/" title="June 2011">June 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/05/" title="May 2011">May 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/03/" title="March 2011">March 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/02/" title="February 2011">February 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/01/" title="January 2011">January 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2010/11/" title="November 2010">November 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2010/04/" title="April 2010">April 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2009/01/" title="January 2009">January 2009 <span style="color: #444;">(2)</span></a></li><li><a href="/2008/01/" title="January 2008">January 2008 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/11/" title="November 2006">November 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/08/" title="August 2006">August 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/07/" title="July 2006">July 2006 <span style="color: #444;">(2)</span></a></li></ul></div><div id="categories"><h3>Categories</h3><ul><li><a href="/category/note/" title="note">note </a></li><li><a href="/category/snippet/" title="snippet">snippet </a></li><li><a href="/category/meta/" title="meta">meta </a></li><li><a href="/category/shoutout/" title="shoutout">shoutout </a></li><li><a href="/category/experimental/" title="experimental">experimental </a></li></ul></div><div id="contact"><h3>Contact</h3><ul><li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li><li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li><li><a href="https://twitter.com/kahara">@kahara</a></li><li><a href="https://github.com/kahara">github.com/kahara</a></li></ul></div></nav></div></div><div class="row"><div class="col-md-9 col-lg-9 col-md-offset-3 col-lg-offset-3"><footer><p class="text-center"><a href="/">Async.fi</a> 2020</p> </footer></div></div></div> <!-- container --><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-20895288-1', 'async.fi');ga('send', 'pageview');</script></body></html>

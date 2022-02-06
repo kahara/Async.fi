@@ -1,0 +1,353 @@
+<!DOCTYPE html><html dir="ltr" lang="en"><head><meta charset="utf-8"><title>aws &#8226; Async.fi</title><meta name="description" content="Posts tagged with aws"><meta name="generator" content="https://github.com/kahara/Async.fi"><meta name="google-site-verification" content="wUwxsPoeGyGWidP3745Hv0HNilHbivTXnkVfKi-QVW4"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="alternate" type="application/rss+xml" title="Async.fi Feed" href="/feed/"><link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"><!--[if lt IE 9]><script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script><script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script><![endif]--><style>*, h1 a, h2 a, h3 a, time a { color: #444; } h2 { margin-top: 0em; } article { margin-bottom: 1em; } time a { display: block; padding-bottom: 1em; } article * { max-width: 100%; } article pre, article code, article embed { overflow-x: auto; word-wrap: normal; white-space: pre; }</style></head><body><div class="container"><div class="row"><div class="col-md-12 page-header"><h1><a href="/">Async.fi</a></h1></div></div><div class="row"><div class="col-lg-9 col-md-9 col-sm-8 col-xs-12 col-lg-push-3 col-md-push-3 col-sm-push-4"><section><article class="post"><h2><a href="/2011/10/handling-amazon-sns-notifications-with-a-tastypie-resource/" rel="bookmark" title="Permanent Link to Handling Amazon SNS notifications with a Tastypie Resource">Handling Amazon SNS notifications with a Tastypie Resource</a></h2><time datetime="2011-10-23T12:49:30+00:00"><a href="/2011/10/handling-amazon-sns-notifications-with-a-tastypie-resource/" rel="bookmark" title="Permanent Link to Handling Amazon SNS notifications with a Tastypie Resource">October 23, 2011</a></time>
+    <p>Using <a href="https://www.djangoproject.com/">Django</a> and <a href="https://github.com/toastdriven/django-tastypie">Tastypie</a>, we automagically respond to <a href="http://aws.amazon.com/sns/">SNS</a> subscription requests. After that part is handled, the notification messages start coming in and those are used to trigger an <a href="http://aws.amazon.com/sqs/">SQS</a> polling cycle (trying to do a thorough job there which may seem like an overkill but it's not). A received SQS message is parsed and contents are passed to an external program that forks and exits which keeps the request from blocking.</p>
+
+<pre>
+from django.conf import settings
+from tastypie import fields, http
+from tastypie.resources import Resource
+from tastypie.bundle import Bundle
+from tastypie.authentication import Authentication
+from tastypie.authorization import Authorization
+from tastypie.throttle import BaseThrottle
+import boto.sq 
+from boto.sqs.message import Message
+from urlparse import urlparse
+import base64, httplib, tempfile, subprocess, time, json, os, sys, syslog
+
+# Http://django-tastypie.readthedocs.org/en/latest/non_orm_data_sources.html
+class NotificationObject(object):
+    def __init__(self, initial=None):
+        self.__dict__['_data'] = {}
+        if hasattr(initial, 'items'):
+            self.__dict__['_data'] = initial
+    def __getattr__(self, name):
+        return self._data.get(name, None)
+    def __setattr__(self, name, value):
+        self.__dict__['_data'][name] = value
+
+class NotificationResource(Resource):
+    sns_messageid = fields.CharField(attribute='MessageId')
+    sns_timestamp = fields.CharField(attribute='Timestamp')
+    sns_topicarn = fields.CharField(attribute='TopicArn')
+    sns_type = fields.CharField(attribute='Type')
+    sns_unsubscribeurl = fields.CharField(attribute='UnsubscribeURL')
+    sns_subscribeurl = fields.CharField(attribute='SubscribeURL')
+    sns_token = fields.CharField(attribute='Token')
+    sns_message = fields.CharField(attribute='Message')
+    sns_subject = fields.CharField(attribute='Subject')
+    sns_signature = fields.CharField(attribute='Signature')
+    sns_signatureversion = fields.CharField(attribute='SignatureVersion')
+    sns_signingcerturl = fields.CharField(attribute='SigningCertURL')
+
+    class Meta:
+        resource_name = 'notification'
+        object_class = NotificationObject
+        fields = ['sns_messageid']
+        list_allowed_methods = ['post']
+        authentication = Authentication()
+        authorization = Authorization()
+
+    def get_resource_uri(self, bundle_or_obj):
+        return ''
+
+    def obj_create(self, bundle, request=None, **kwargs):
+
+        bundle.obj = NotificationObject(initial={ 'MessageId': '', 'Timestamp': '', 'TopicArn': '', 'Type': '', 'UnsubscribeURL': '', 'SubscribeURL': '', 'Token': '', 'Message': '', 'Subject': '', 'Signature': '', 'SignatureVersion': '', 'SigningCertURL': '' })
+        bundle = self.full_hydrate(bundle)
+
+        o = urlparse(bundle.data['SigningCertURL'])
+        if not o.hostname.endswith('.amazonaws.com'):
+            return bundle
+
+        topicarn = bundle.data['TopicArn']
+
+        if topicarn != settings.SNS_TOPIC:
+            return bundle
+
+        if not self.verify_message(bundle):
+            return bundle
+
+        if bundle.data['Type'] == 'SubscriptionConfirmation':
+            self.process_subscription(bundle)
+        elif bundle.data['Type'] == 'Notification':
+            self.process_notification(bundle)
+
+        return bundle
+
+    def process_subscription(self, bundle):
+        syslog.syslog('SNS Subscription ' + bundle.data['SubscribeURL'])
+        o = urlparse(bundle.data['SubscribeURL'])
+        conn = httplib.HTTPSConnection(o.hostname)
+        conn.putrequest('GET', o.path + '?' + o.query)
+        conn.endheaders()
+        response = conn.getresponse()
+        subscription = response.read()
+
+    def process_notification(self, bundle):
+        sqs = boto.sqs.connect_to_region(settings.SQS_REGION)
+        queue = sqs.lookup(settings.SQS_QUEUE)
+        retries = 5
+        done = False
+        while True:
+            if retries &lt; 1:
+                break
+            retries -= 1
+            time.sleep(5)
+            messages = queue.get_messages(10, visibility_timeout=60)
+            if len(messages) &lt; 1:
+                continue
+            for message in messages:
+                try:
+                    m = json.loads(message.get_body())
+                    m['return_sns_region'] = settings.SNS_REGION
+                    m['return_sns_topic'] = settings.SNS_TOPIC
+                    m['return_sqs_region'] = settings.SQS_REGION
+                    m['return_sqs_queue'] = settings.SQS_QUEUE
+                    process = subprocess.Popen(['/usr/bin/nice', '-n', '15', os.path.dirname(os.path.normpath(os.sys.modules[settings.SETTINGS_MODULE].__file__)) + '/process.py', base64.b64encode(json.dumps(m))], shell=False)
+                    process.wait()
+                except:
+                    e = sys.exc_info()[1]
+                    syslog.syslog(str(e))
+                queue.delete_message(message)
+
+    def verify_message(self, bundle):
+        message = u''
+        if bundle.data['Type'] == 'SubscriptionConfirmation':
+            message += 'Message\n'
+            message += bundle.data['Message'] + '\n'
+            message += 'MessageId\n'
+            message += bundle.data['MessageId'] + '\n'
+            message += 'SubscribeURL\n'
+            message += bundle.data['SubscribeURL'] + '\n'
+            message += 'Timestamp\n'
+            message += bundle.data['Timestamp'] + '\n'
+            message += 'Token\n'
+            message += bundle.data['Token'] + '\n'
+            message += 'TopicArn\n'
+            message += bundle.data['TopicArn'] + '\n'
+            message += 'Type\n'
+            message += bundle.data['Type'] + '\n'
+        elif bundle.data['Type'] == 'Notification':
+            message += 'Message\n'
+            message += bundle.data['Message'] + '\n'
+            message += 'MessageId\n'
+            message += bundle.data['MessageId'] + '\n'
+            if bundle.data['Subject'] != '':
+                message += 'Subject\n'
+                message += bundle.data['Subject'] + '\n'
+            message += 'Timestamp\n'
+            message += bundle.data['Timestamp'] + '\n'
+            message += 'TopicArn\n'
+            message += bundle.data['TopicArn'] + '\n'
+            message += 'Type\n'
+            message += bundle.data['Type'] + '\n'
+        else:
+            return False
+
+        o = urlparse(bundle.data['SigningCertURL'])
+        conn = httplib.HTTPSConnection(o.hostname)
+        conn.putrequest('GET', o.path)
+        conn.endheaders()
+        response = conn.getresponse()
+        cert = response.read()
+
+        # ok; attempt to use m2crypto failed, using openssl command line tool instead
+
+        file_cert = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        file_sig = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        file_mess = tempfile.NamedTemporaryFile(mode='w', delete=False)
+
+        file_cert.write(cert)
+        file_sig.write(bundle.data['Signature'])
+        file_mess.write(message)
+
+        file_cert.close()
+        file_sig.close()
+        file_mess.close()
+
+        # see: https://async.fi/2011/10/sns-verify-sh/
+        verify_process = subprocess.Popen(['/usr/local/bin/sns-verify.sh', file_cert.name, file_sig.name, file_mess.name], shell=False)
+        verify_process.wait()
+
+        if verify_process.returncode == 0:
+            return True
+
+        return False
+</pre>
+
+<p>That <code>process.py</code> would be something like:</p>
+
+<pre>
+#!/usr/bin/env python
+
+import boto.sqs
+from boto.sqs.message import Message
+import base64, json, os, sys, syslog
+
+if len(sys.argv) != 2:
+    sys.exit('usage: %s &lt;base64 encoded json object&gt;' % (sys.argv[0], ))
+
+m = json.loads(base64.b64decode(sys.argv[1]))
+
+# http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
+try:
+    pid = os.fork()
+    if pid &gt; 0:
+        sys.exit(0)
+except OSError, e:
+    print &gt;&gt;sys.stderr, &quot;fork #1 failed: %d (%s)&quot; % (e.errno, e.strerror)
+    sys.exit(1)
+
+os.chdir(&quot;/&quot;)
+os.setsid()
+os.umask(0)
+
+try:
+    pid = os.fork()
+    if pid &gt; 0:
+        sys.exit(0)
+except OSError, e:
+    sys.exit(1)
+
+syslog.syslog(sys.argv[0] + ': ' + str(m))
+
+# ...
+</pre>
+
+<p>That is, <code>process.py</code> gets the received (and doped) SQS message, Base64 encoded, as it's only command line argument, forks, exits and does what it's supposed to do after that on its own. Control returns to <code>NotificationResource</code> so the request doesn't block unnecessarily.</p><p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/django/" rel="tag">django</a> <a href="/tag/python/" rel="tag">python</a> <a href="/tag/rest/" rel="tag">rest</a> <a href="/tag/sns/" rel="tag">sns</a> <a href="/tag/sqs/" rel="tag">sqs</a> <a href="/tag/tastypie/" rel="tag">tastypie</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/10/sns-verify-sh/" rel="bookmark" title="Permanent Link to sns-verify.sh">sns-verify.sh</a></h2><time datetime="2011-10-22T12:23:40+00:00"><a href="/2011/10/sns-verify-sh/" rel="bookmark" title="Permanent Link to sns-verify.sh">October 22, 2011</a></time>
+    <pre>
+#!/bin/sh
+
+if [ $# -lt 3 ]; then
+  echo &quot;usage: sns-verify.sh CERT SIG MESS&quot;
+  exit 1
+fi
+
+CERT=$1
+SIG=$2
+MESS=$3
+
+PUB=`/bin/tempfile`
+SIGRAW=`/bin/tempfile`
+
+# http://sns-public-resources.s3.amazonaws.com/SNS_Message_Signing_Release_Note_Jan_25_2011.pdf
+/usr/bin/openssl x509 -in $CERT -pubkey -noout &gt; $PUB
+/usr/bin/base64 -i -d $SIG &gt; $SIGRAW
+RET=`/usr/bin/openssl dgst -sha1 -verify $PUB -signature $SIGRAW $MESS`
+
+if [ X&quot;$RET&quot; = X&quot;Verified OK&quot; ]; then
+  exit 0
+fi
+
+exit 1
+</pre><p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/bash/" rel="tag">bash</a> <a href="/tag/openssl/" rel="tag">openssl</a> <a href="/tag/sns/" rel="tag">sns</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/10/s3-client-upload-parameter-generation-with-python/" rel="bookmark" title="Permanent Link to S3 client-upload parameter generation with Python">S3 client-upload parameter generation with Python</a></h2><time datetime="2011-10-16T12:50:44+00:00"><a href="/2011/10/s3-client-upload-parameter-generation-with-python/" rel="bookmark" title="Permanent Link to S3 client-upload parameter generation with Python">October 16, 2011</a></time><pre>
+# http://aws.amazon.com/articles/1434   
+def S3UploadParams(bucket_name, object_name, expiry, maxsize, redirect):
+    import os, boto, json, base64, hmac, hashlib
+    from time import time, gmtime, strftime
+
+    def SignS3Upload(policy_document):
+        policy = base64.b64encode(policy_document)
+        return base64.b64encode(hmac.new(
+                boto.config.get('Credentials', 'aws_secret_access_key'),
+                policy,
+                hashlib.sha1
+                ).digest())
+
+    def GenerateS3PolicyString(bucket_name, object_name, expiry, maxsize, redirect):
+        policy_template = '{ &quot;expiration&quot;: &quot;%s&quot;, &quot;conditions&quot;: [ {&quot;bucket&quot;: &quot;%s&quot;}, [&quot;eq&quot;, &quot;$key&quot;, &quot;%s&quot;], {&quot;acl&quot;: &quot;private&quot;}, {&quot;success_action_redirect&quot;: &quot;%s&quot;}, [&quot;content-length-range&quot;, 0, %s] ] }'
+        return policy_template % (
+            strftime(&quot;%Y-%m-%dT%H:%M:%SZ&quot;, gmtime(time() + expiry)),
+            bucket_name,
+            object_name,
+            redirect,
+            maxsize
+            )
+    
+    params = {
+        'key': object_name,
+        'AWSAccessKeyId': boto.config.get('Credentials', 'aws_access_key_id'),
+        'acl': 'private',
+        'success_action_redirect': redirect,
+        }
+
+    policy = GenerateS3PolicyString(bucket_name, object_name, expiry, maxsize, redirect)
+    params['policy'] = base64.b64encode(policy)
+
+    signature = SignS3Upload(policy)
+    params['signature'] = signature
+
+    return params
+</pre>
+<p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/django/" rel="tag">django</a> <a href="/tag/http/" rel="tag">http</a> <a href="/tag/post/" rel="tag">post</a> <a href="/tag/python/" rel="tag">python</a> <a href="/tag/s3/" rel="tag">s3</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/05/reading-ec2-tags-with-boto/" rel="bookmark" title="Permanent Link to Reading EC2 tags with Boto">Reading EC2 tags with Boto</a></h2><time datetime="2011-05-29T14:33:04+00:00"><a href="/2011/05/reading-ec2-tags-with-boto/" rel="bookmark" title="Permanent Link to Reading EC2 tags with Boto">May 29, 2011</a></time><strong>(Ouch! Looks like WordPress update to 3.1.3 wiped all the modifications I made to the default theme. Admittedly I should've seen that coming.)</strong>
+
+What I want to do is basically attach a key-value pair to an EC2 instance when launching it in AWS Management Console and read the value inside the instance when it's running. To be more specific, I use this to to set a key called <code>environment</code> that can have values like <code>dev</code>, <code>stage</code> and <code>prod</code> so that the Django config can decide which database to connect to etc. while starting up. I suspect that in Boto the current instance can somehow be referenced in a more direct fashion but this works as well.
+
+First, append the following to <code>/etc/profile</code>:
+<pre># See: http://stackoverflow.com/questions/625644/find-out-the-instance-id-from-within-an-ec2-machine
+export EC2_INSTANCE_ID="`wget -q -O - http://169.254.169.254/latest/meta-data/instance-id || die \"wget instance-id has failed: $?\"`"
+test -n "$EC2_INSTANCE_ID" || die 'cannot obtain instance-id'
+export EC2_AVAIL_ZONE="`wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone || die \"wget availability-zone has failed: $?\"`"
+test -n "$EC2_AVAIL_ZONE" || die 'cannot obtain availability-zone'
+export EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\\([0-9][0-9]*\\)[a-z]*\\$:\\\\1:'`"</pre>
+Now we know the region and instance ID. Next, install <a href="http://boto.cloudhackers.com/">Boto</a> by running the following commands:
+<pre>wget "http://boto.googlecode.com/files/boto-2.0b4.tar.gz"
+zcat boto-2.0b4.tar.gz | tar xfv -
+cd boto-2.0b4
+python ./setup.py install</pre>
+Then, add these lines to <code>~/.profile</code>:
+<pre>export AWS_ACCESS_KEY_ID=&lt;ACCESS_KEY&gt;
+export AWS_SECRET_ACCESS_KEY=&lt;SECRET_KEY&gt;</pre>
+Or the equivalent in <code>~/.boto</code>:
+<pre>[Credentials]
+aws_access_key_id = &lt;ACCESS_KEY&gt;
+aws_secret_access_key = &lt;SECRET_KEY&gt;</pre>
+Now, to read the tag we want in Python:
+<pre>#!/usr/bin/env python                                                                                                                                           
+
+import os
+from boto import ec2
+
+ec2_instance_id = os.environ.get('EC2_INSTANCE_ID')
+ec2_region = os.environ.get('EC2_REGION')
+
+conn = ec2.connect_to_region(ec2_region)
+
+reservations = conn.get_all_instances()
+instances = [i for r in reservations for i in r.instances]
+
+for instance in instances:
+    if instance.__dict__['id'] == ec2_instance_id:
+        print instance.__dict__['tags']['environment']</pre><p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/boto/" rel="tag">boto</a> <a href="/tag/django/" rel="tag">django</a> <a href="/tag/ec2/" rel="tag">ec2</a> <a href="/tag/python/" rel="tag">python</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><article class="post"><h2><a href="/2011/05/verifying-amazon-sns-messages-with-php/" rel="bookmark" title="Permanent Link to Verifying Amazon SNS Messages with PHP">Verifying Amazon SNS Messages with PHP</a></h2><time datetime="2011-05-14T14:21:01+00:00"><a href="/2011/05/verifying-amazon-sns-messages-with-php/" rel="bookmark" title="Permanent Link to Verifying Amazon SNS Messages with PHP">May 14, 2011</a></time>Messages sent by <a href="http://aws.amazon.com/sns/">Amazon Simple Notification Service</a> are signed, and checking that any received message is indeed from AWS and not from some douche trying to outsmart you is not very hard (nor should it be optional, for that matter):
+
+<a href="/media/2011/05/sns-verify.php_1.txt">sns-verify.php</a>
+
+The <code>verify_sns()</code> function expects the message in JSON format, plus region (e.g. "eu-west-1"), numerical account ID without dashes and an array containing the topics you're interested in. The code will verify both <code>SubscriptionConfirmation</code> and <code>Notification</code> messages. It loads the certificate from the address in <code>SigningCertURL</code> field  to check against for each message separately because the certificate changes over time, as described <a href="https://forums.aws.amazon.com/ann.jspa?annID=882">here</a>. It is also checked that the host where the certificate is loaded from is in the amazonaws.com domain.
+
+Example usage where subscriptions are automatically confirmed:
+
+<pre>
+require_once('sns-verify.php');
+
+if($_SERVER['REQUEST_METHOD'] != 'POST') {
+    logger('Not POST request, quitting');
+    exit();
+}
+
+$post = file_get_contents('php://input');
+
+if(!verify_sns($post, 'REGION', 'ACCOUNT', array('TOPIC 1', 'TOPIC 2'))) {
+    exit;
+}
+
+$msg = json_decode($post);
+
+
+if($msg->Type == 'SubscriptionConfirmation') {
+    logger('SNS SubscriptionConfirmation received);
+    file_get_contents($msg->SubscribeURL);
+} elseif($msg->Type == 'Notification') {
+    logger('SNS Notification received);
+    process_message($msg);
+}
+</pre><p class="tags"><strong>Tagged with:</strong> <a href="/tag/aws/" rel="tag">aws</a> <a href="/tag/php/" rel="tag">php</a> <a href="/tag/sns/" rel="tag">sns</a> <a href="/tag/x-509/" rel="tag">x-509</a> </p><p class="categories"><strong>Categorised as:</strong> <a href="/category/snippet/" title="View all posts in snippet" rel="tag">snippet</a></p><hr class="clearfix" /></article><ul class="pager"><li><a href="/tag/aws/page/3/" >&lt; Older Entries</a></li><li><a href="/tag/aws/" >Newer Entries &gt;</a></li></ul></section></div><div class="col-lg-3 col-md-3 col-sm-4 col-xs-12 col-lg-pull-9 col-md-pull-9 col-sm-pull-8"><nav><div id="search"><form id="cse-search-box" action="https://google.com/cse"><input type="hidden" name="cx" value="013195161865949220878:l1y-926apew"/><input type="hidden" name="ie" value="UTF-8"/><div class="input-group custom-search-form"><input type="text" class="form-control" name="q"><span class="input-group-btn"><button class="btn btn-default" type="submit" name="sa"><span class="glyphicon glyphicon-search"></span></button></span></div></form></div><div id="recent-posts"><h3>Recent Posts</h3><ul><li><a href="/2020/12/wireguard-notes/" title="WireGuard Notes">WireGuard Notes </a></li><li><a href="/2016/02/building-virtual-machines-with-vmbuilder/" title="Building virtual machines with vmbuilder">Building virtual machines with vmbuilder </a></li><li><a href="/2016/01/oh2ewl/" title="OH2EWL">OH2EWL </a></li><li><a href="/2014/06/salt-notes/" title="Salt Notes">Salt Notes </a></li><li><a href="/2014/01/django-and-docker-a-marriage-made-in-heaven/" title="Django and Docker: a Marriage Made in Heaven">Django and Docker: a Marriage Made in Heaven </a></li></ul></div><div id="archives"><h3>Archives</h3><ul><li><a href="/2020/12/" title="December 2020">December 2020 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/02/" title="February 2016">February 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2016/01/" title="January 2016">January 2016 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/06/" title="June 2014">June 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2014/01/" title="January 2014">January 2014 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/12/" title="December 2013">December 2013 <span style="color: #444;">(4)</span></a></li><li><a href="/2013/07/" title="July 2013">July 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2013/04/" title="April 2013">April 2013 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/11/" title="November 2012">November 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/08/" title="August 2012">August 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/07/" title="July 2012">July 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/06/" title="June 2012">June 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/05/" title="May 2012">May 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/04/" title="April 2012">April 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/03/" title="March 2012">March 2012 <span style="color: #444;">(2)</span></a></li><li><a href="/2012/02/" title="February 2012">February 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2012/01/" title="January 2012">January 2012 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/12/" title="December 2011">December 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/10/" title="October 2011">October 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/08/" title="August 2011">August 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/07/" title="July 2011">July 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2011/06/" title="June 2011">June 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/05/" title="May 2011">May 2011 <span style="color: #444;">(4)</span></a></li><li><a href="/2011/03/" title="March 2011">March 2011 <span style="color: #444;">(2)</span></a></li><li><a href="/2011/02/" title="February 2011">February 2011 <span style="color: #444;">(1)</span></a></li><li><a href="/2011/01/" title="January 2011">January 2011 <span style="color: #444;">(3)</span></a></li><li><a href="/2010/11/" title="November 2010">November 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2010/04/" title="April 2010">April 2010 <span style="color: #444;">(1)</span></a></li><li><a href="/2009/01/" title="January 2009">January 2009 <span style="color: #444;">(2)</span></a></li><li><a href="/2008/01/" title="January 2008">January 2008 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/11/" title="November 2006">November 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/08/" title="August 2006">August 2006 <span style="color: #444;">(1)</span></a></li><li><a href="/2006/07/" title="July 2006">July 2006 <span style="color: #444;">(2)</span></a></li></ul></div><div id="categories"><h3>Categories</h3><ul><li><a href="/category/note/" title="note">note </a></li><li><a href="/category/snippet/" title="snippet">snippet </a></li><li><a href="/category/meta/" title="meta">meta </a></li><li><a href="/category/shoutout/" title="shoutout">shoutout </a></li><li><a href="/category/experimental/" title="experimental">experimental </a></li></ul></div><div id="contact"><h3>Contact</h3><ul><li><a href="mailto:joni.kahara@async.fi">joni.kahara@async.fi</a></li><li><a href="https://plus.google.com/u/0/112535968102790189432/posts">+Joni Kähärä</a></li><li><a href="https://twitter.com/kahara">@kahara</a></li><li><a href="https://github.com/kahara">github.com/kahara</a></li></ul></div></nav></div></div><div class="row"><div class="col-md-9 col-lg-9 col-md-offset-3 col-lg-offset-3"><footer><p class="text-center"><a href="/">Async.fi</a> 2020</p> </footer></div></div></div> <!-- container --><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-20895288-1', 'async.fi');ga('send', 'pageview');</script></body></html>
