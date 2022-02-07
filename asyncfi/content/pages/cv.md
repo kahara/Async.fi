@@ -1,7 +1,7 @@
 ---
 title: "CV"
-date: 2022-02-07T16:54:53+02:00
-draft: true
+date: 2022-02-07T18:00:00+00:00
+draft: false
 ---
 Joni Kähärä
 
