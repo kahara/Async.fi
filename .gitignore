@@ -6,3 +6,4 @@ proof/
 .DS_Store
 env/
 build/
+**/.hugo*
