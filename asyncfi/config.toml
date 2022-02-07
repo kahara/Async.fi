@@ -1,0 +1,70 @@
+baseURL = 'https://async.fi/'
+languageCode = 'en-us'
+title = 'async.fi'
+theme = 'smol'
+
+[markup]
+  [markup.highlight]
+    anchorLineNos = false
+    codeFences = true
+    guessSyntax = false
+    hl_Lines = ''
+    lineAnchors = ''
+    lineNoStart = 1
+    lineNos = false
+    lineNumbersInTable = true
+    noClasses = true
+    style = 'solarized-dark'
+    tabWidth = 4
+
+# Parameters
+[params]
+    subtitle = ""
+    dateFmt = "2006-01-02"
+
+# Header
+[menu]
+  [[menu.main]]
+        identifier = "posts"
+        name = "posts"
+        url = "/posts/"
+        weight = 1 
+
+  [[menu.main]]
+        identifier = "categories"
+        name = "categories"
+        url = "/categories/"
+        weight = 2 
+
+  [[menu.main]]
+        identifier = "tags"
+        name = "tags"
+        url = "/tags/"
+        weight = 3
+
+  [[menu.main]]
+        identifier = "pages"
+        name = "pages"
+        url = "/pages/"
+        weight = 4
+
+# Footer
+  [[menu.footer]]
+        name = "cv"
+        url = "/pages/cv"
+        weight = 1
+
+  [[menu.footer]]
+        name = "github"
+        url = "https://github.com/kahara/Async.fi"
+        weight = 2
+
+  [[menu.footer]]
+        name = "twitter"
+        url = "https://twitter.com/@kahara"
+        weight = 3
+
+  [[menu.footer]]
+        name = "old stuff"
+        url = "https://past.async.fi"
+        weight = 4
