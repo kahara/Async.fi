@@ -1,5 +1,6 @@
 baseURL = 'https://async.fi/'
 languageCode = 'en-us'
+relativeURLs = true
 title = 'async.fi'
 theme = 'smol'
 
