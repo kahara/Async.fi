@@ -19,12 +19,15 @@ consisted of writing plain HTML into a monolithic XML source file, then deployin
 to S3 where Cloudfront served it from. Porting the Python 2 code to Python 3
 would've likely been tedious, and would've still left me stuck with HTML.
 
-Additionally, I've been moving my non-work efforts away from faraway clouds
-(partly because of politics, partly because I get to deal with those enough
-already on a daily basis, partly because of costs) and to a machine from
+Additionally, I've recently started moving my non-work efforts away from faraway clouds
+&mdash; partly because of politics, partly because I already get to deal with those
+enough on a daily basis at work, and partly because of costs &mdash; to a machine from
 [a local operator](https://upcloud.com/signup/?promo=RY3367)
 with presence within a few hops and a short ping from our home network.
+Therefore it felt natural to run the site there, too.
+[Caddy](https://caddyserver.com/)
+ftw.
 
-The theme is
+This theme is
 [smol](https://github.com/colorchestra/smol)
 with some minor tweaks.
