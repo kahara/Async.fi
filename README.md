@@ -3,12 +3,16 @@
 ## Local development
 
 ```console
-cd asyncfi
-hugo server -D
-# http://localhost:1313/
+sudo snap install hugo
+hugo server -D # http://localhost:1313/
 hugo new posts/postname.md
 ```
 
 ## Deploying
 
-FIXME decide how to go about this
+```
+sudo snap install hugo
+hugo
+docker-compose build --no-cache
+docker-compose up -d
+```
