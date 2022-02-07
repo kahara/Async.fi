@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Pages on async.fi</title>
+    <link>https://async.fi/pages/</link>
+    <description>Recent content in Pages on async.fi</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 07 Feb 2022 18:00:00 +0000</lastBuildDate><atom:link href="https://async.fi/pages/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CV</title>
+      <link>https://async.fi/pages/cv/</link>
+      <pubDate>Mon, 07 Feb 2022 18:00:00 +0000</pubDate>
+      
+      <guid>https://async.fi/pages/cv/</guid>
+      <description>Joni Kähärä
+joni.kahara@async.fi +358-50-4952033
+Tenderinlenkki 8 A 52, 00520 HELSINKI Finland
+github.com/kahara gitlab.com/kahara twitter.com/kahara
+Profile Joni is a programmer and general &amp;ldquo;DevOps&amp;rdquo; person from Helsinki, Finland. He has worked in the technology industry since 1997.
+Some of the things that bring him joy in the professional context include:
+ Remote work. Open, preferably asynchronous, text-based communication. Automating things that can be automated. Think Ansible, Terraform, and Kubernetes. And GitHub and GitLab workflows.</description>
+    </item>
+    
+  </channel>
+</rss>

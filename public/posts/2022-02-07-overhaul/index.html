@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<style type=text/css>body{font-family:monospace;}</style>
+	<title>An overhaul</title>
+	
+	
+	<link rel="stylesheet" href="../../css/style.css">
+	
+	
+</head>
+<body>
+	<header>
+	<div style="float: left;"><a href="../../">async.fi</a></div>
+	<div style="float: right;"></div>
+	<p style="clear: both; padding-top: 1em;">
+	<nav>
+			
+			
+			<a href="../../posts/"><b>posts</b></a>
+			
+			<a href="../../categories/"><b>categories</b></a>
+			
+			<a href="../../tags/"><b>tags</b></a>
+			
+			<a href="../../pages/"><b>pages</b></a>
+			
+	</nav>
+	</p>
+	
+</header>
+
+	
+	<main>
+		<article>
+			<h1>An overhaul</h1>
+			<b><time>2022-02-07</time></b>
+		       
+		           <a href="../../tags/meta">meta</a>
+        	       
+
+			<div>
+				<p>This was long overdue but I&rsquo;ve finally switched to
+<a href="https://gohugo.io/">a modern static site generator</a>.
+The
+<a href="https://github.com/kahara/Async.fi/commits/91b4bd250e5ba97a105c0bcc26f310d9a5824bc4/site.py">old system</a>
+was written by myself in Python 2 many moons ago, and adding
+<a href="https://past.async.fi">posts</a>
+consisted of writing plain HTML into a monolithic XML source file, then deploying
+to S3 where Cloudfront served it from. Porting the Python 2 code to Python 3
+would&rsquo;ve likely been tedious, and would&rsquo;ve still left me stuck with HTML.</p>
+<p>Additionally, I&rsquo;ve recently started moving my non-work efforts away from faraway clouds
+— partly because of politics, partly because I already get to deal with those
+enough on a daily basis at work, and partly because of costs — to a machine from
+<a href="https://upcloud.com/signup/?promo=RY3367">a local operator</a>
+with presence within a few hops and a short ping from our home network.
+Therefore it felt natural to run the site there, too.
+<a href="https://caddyserver.com/">Caddy</a>
+ftw.</p>
+<p>This theme is
+<a href="https://github.com/colorchestra/smol">smol</a>
+with some minor tweaks.</p>
+
+			</div>
+		</article>
+	</main>
+<aside>
+	<div>
+		<div>
+			<h3>LATEST POSTS</h3>
+		</div>
+		<div>
+			<ul>
+				
+				<li><a href="../../posts/2022-02-07-overhaul/">An overhaul</a></li>
+				
+			</ul>
+		</div>
+	</div>
+</aside>
+
+
+	<footer>
+	<p>&copy; 2022 <a href="../../"><b>async.fi</b></a>
+	<a href="../../pages/cv"><b>cv</b></a>
+	<a href="https://github.com/kahara/Async.fi"><b>github</b></a>
+	<a href="https://twitter.com/@kahara"><b>twitter</b></a>
+	<a href="https://past.async.fi"><b>old stuff</b></a>
+	</p>
+</footer>
+
+</body>
+</html>
