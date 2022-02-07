@@ -57,7 +57,7 @@ Some of the things that bring him joy in the professional context include:
   burning through savings and credit in the process
 * Key lesson learnt: don't expect anything to happen without active sales
 
-4/2011 &ndash; 3/2014 [Visi-Systems Oy](http://visisystems.fi/)
+4/2011 &ndash; 3/2014 [Visi-Systems Oy](https://visisystems.fi/)
 
 * Volumetric cargo measurement system utilizing a LIDAR and RFID tagging of bulk containers
 * Visitor counting system for pedestrian and vehicle traffic, utilizing "traditional" and
@@ -66,7 +66,7 @@ Some of the things that bring him joy in the professional context include:
 * A wall-climbing, (magnetic) wheeled inspection robot
 * Various smaller software development projects
 
-2/2003 &ndash; 3/2011 [Visi Oy](http://www.visi.fi/)
+2/2003 &ndash; 3/2011 [Visi Oy](https://www.visi.fi/)
 
 * Physical access control/video surveillance system (the same project as below, company
   split in two)
@@ -74,7 +74,7 @@ Some of the things that bring him joy in the professional context include:
 * Numerous hardware and software integration projects, mainly in the area of physical
   security and video surveillance
 
-11/2000 &ndash; 1/2003 [Visi-Systems Oy](http://visisystems.fi/)
+11/2000 &ndash; 1/2003 [Visi-Systems Oy](https://visisystems.fi/)
 
 * Various web front ends for industrial data logging systems
 * Physical access control/video surveillance system; this evolved from Visual Basic 6
@@ -82,7 +82,7 @@ Some of the things that bring him joy in the professional context include:
   gate control systems, video matrices and programmable logic controllers
 * Numerous smaller software development projects, including embedded things
 
-2/2000 &ndash; 10/2000 [Suomen Posti Oy](http://www.posti.fi/en/)
+2/2000 &ndash; 10/2000 [Suomen Posti Oy](https://www.posti.fi/en/)
 
 * Morning newspaper delivery (0130h&ndash;)
 * This was _real work_
@@ -100,7 +100,7 @@ Some of the things that bring him joy in the professional context include:
 * Maintaining server-side Javascript code of a press release service (early days of SaaS)
 * Various web site development and maintenance assignments
 
-1/1997 &ndash; 10/1997 [Top Information](http://www.topinformation.fi/)
+1/1997 &ndash; 10/1997 [Top Information](https://www.topinformation.fi/)
 
 * Developing software (Delphi, C) and iButton-based electronics for a physical access control system
 
