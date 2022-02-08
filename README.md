@@ -10,7 +10,7 @@ hugo new posts/postname.md
 
 Test with Caddy:
 
-```
+```console
 sudo snap install hugo
 hugo && docker-compose build --no-cache && docker-compose up
 ```
@@ -18,6 +18,7 @@ hugo && docker-compose build --no-cache && docker-compose up
 ## Deploy
 
 ```console
+hugo
 docker build --no-cache --tag jonikahara/www-async-fi:latest .
 docker push jonikahara/www-async-fi:latest
 ```
