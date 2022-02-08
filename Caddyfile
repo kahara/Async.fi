@@ -1,4 +1,4 @@
-localhost
+http://localhost
 
 encode zstd gzip
 root * /var/www/html
