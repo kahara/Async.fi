@@ -1,0 +1,13 @@
+<header>
+	<div style="float: left;"><a href="/">{{ .Site.Title }}</a></div>
+	<div style="float: right;">{{ .Site.Params.subtitle | safeHTML }}</div>
+	<p style="clear: both; padding-top: 1em;">
+	<nav>
+			{{ with .Site.Menus.main }}
+			{{ range . }}
+			<a href="{{ .URL | relURL }}"><b>{{ .Name }}</b></a>
+			{{ end }}
+	</nav>
+	</p>
+	{{ end }}
+</header>

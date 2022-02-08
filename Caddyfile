@@ -1,0 +1,5 @@
+:80
+
+log
+root * /var/www/html
+file_server
