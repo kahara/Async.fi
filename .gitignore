@@ -7,3 +7,4 @@ proof/
 env/
 build/
 **/.hugo*
+public/*
