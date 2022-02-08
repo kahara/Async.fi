@@ -28,5 +28,5 @@ composition is running:
 
 ```console
 docker-compose pull
-docker-compose restart www
+docker-compose up --detach --force-recreate www
 ```

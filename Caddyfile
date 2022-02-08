@@ -1,5 +1,5 @@
-http://localhost
+:80
 
-encode zstd gzip
+log
 root * /var/www/html
 file_server
