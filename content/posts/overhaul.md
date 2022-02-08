@@ -31,3 +31,6 @@ ftw.
 This theme is
 [smol](https://github.com/colorchestra/smol)
 with some minor tweaks.
+
+TODO: I'd like to be able to add Graphviz graphs directly inline in
+blog post Markdown.
