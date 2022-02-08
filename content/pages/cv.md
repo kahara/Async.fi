@@ -16,7 +16,7 @@ Joni Kähärä
 
 ## Profile
 
-Joni is a programmer and general "DevOps" person from Helsinki, Finland.
+Joni (b. 1975) is a programmer and general "DevOps" person from Helsinki, Finland.
 He has worked in the technology industry since 1997.
 
 Some of the things that bring him joy in the professional context include:
