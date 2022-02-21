@@ -8,3 +8,6 @@ env/
 build/
 **/.hugo*
 public/*
+
+# JetBrains cruft
+**/.idea
