@@ -21,7 +21,7 @@ He has worked in the technology industry since 1997.
 
 Some of the things that bring him joy in the professional context include:
 
-* Remote work. Open, preferably asynchronous, text-based communication.
+* Remote work. Open, preferably text-based and asynchronous communication.
 * Automating things that can be automated. Think Ansible, Terraform, and Kubernetes.
   And GitHub and GitLab workflows.
 * Enabling domain specialists to write testable sets of microservices that can be deployed
