@@ -22,26 +22,36 @@ He has worked in the technology industry since 1997.
 Some of the things that bring him joy in the professional context include:
 
 * Remote work. Open, preferably asynchronous, text-based communication.
-* Automating things that can be automated. Think Ansible, Terraform, and Kubernetes.
-  And GitHub and GitLab workflows.
-* Enabling domain specialists to write testable sets of microservices that can be deployed
-  with least effort, and changes of which can be managed controllably.
-* Working with services on "edge", or in other words things that interface with the real world.
-  Also anything with tight latency requirements.
-* Writing readable, robust, and performant code (and tests) in Go or Python that doesn't
-  waste resources. Rust and C have their special time and place, too.
-* Writing readable documentation (Markdown, Pandoc preferred). Also technical writing in general,
-  and reading anything that is well-written. Well thought out diagrams always a huge plus.
+* Automating things that can be automated. Think Ansible, Terraform, and
+  Kubernetes. And GitHub and GitLab workflows.
+* Keeping things observable with the likes of Prometheus, Alertmanager, and
+  Grafana.
+* Enabling domain specialists to write testable sets of microservices that
+  can be deployed with least effort, and changes of which can be managed
+  controllably.
+* Working with services on "edge", or in other words things that interface
+  with the physical world. Also anything with tight latency requirements.
+* Writing readable, robust, and performant code (and tests) in Go or Python
+  that doesn't waste resources. Rust and C have their special time and place,
+  too.
+* Writing readable documentation (Markdown, Pandoc preferred). Also technical
+  writing in general, and reading anything that is well-written. Well thought
+  out diagrams always a huge plus.
 
 ## Work Experience
 
-11/2019 &ndash; Present [Advian Oy](https://advian.fi/)
+11/2019 &ndash; [Advian Oy](https://advian.fi/)
 
-* Technical Specialist, mostly in "Digirata positioning backend" project since Q4/2020
-* Day to day work consists mostly of herding AWS machinery in general and Kubernetes (EKS) machinery
-  in particular, and coding in Go
-* Services' development is supported by, and they're deployed with GitHub Actions-based workflows.
-  Kafka (MSK) is the backbone.
+Below I've listed the longer, outsourcing-type gigs only.
+
+* Q1/2022 &ndash; Systems herding at
+  [RELEX](https://www.relexsolutions.com/)
+* Q4/2020 &ndash; Q1/2022 [Digirata](https://digirata.fi/) positioning backend
+  project
+  * Day to day work consisted mostly of herding AWS machinery in general and
+    Kubernetes (EKS) machinery in particular, and coding in Go
+  * Services' development is supported by, and they're deployed with GitHub
+    Actions-based workflows. Kafka (MSK) is the backbone.
 
 2/2018 &ndash; 11/2019 [CGI Suomi Oy](https://www.cgi.fi/)
 
