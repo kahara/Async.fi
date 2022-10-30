@@ -67,11 +67,6 @@ theme = 'smol'
         weight = 3
 
   [[menu.footer]]
-        name = "twitter"
-        url = "https://twitter.com/@kahara"
-        weight = 4
-
-  [[menu.footer]]
         name = "old stuff"
         url = "https://past.async.fi"
         weight = 5

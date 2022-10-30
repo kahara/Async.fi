@@ -12,7 +12,6 @@ Joni Kähärä
 
 [github.com/kahara](https://github.com/kahara)
 [gitlab.com/kahara](https://gitlab.com/kahara)
-[twitter.com/kahara](https://twitter.com/kahara)
 
 ## Profile
 
