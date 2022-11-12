@@ -32,11 +32,11 @@ theme = 'smol'
         url = "/posts/"
         weight = 1 
 
-  [[menu.main]]
-        identifier = "categories"
-        name = "categories"
-        url = "/categories/"
-        weight = 2 
+#  [[menu.main]]
+#        identifier = "categories"
+#        name = "categories"
+#        url = "/categories/"
+#        weight = 2
 
   [[menu.main]]
         identifier = "tags"
@@ -44,11 +44,11 @@ theme = 'smol'
         url = "/tags/"
         weight = 3
 
-  [[menu.main]]
-        identifier = "pages"
-        name = "pages"
-        url = "/pages/"
-        weight = 4
+#  [[menu.main]]
+#        identifier = "pages"
+#        name = "pages"
+#        url = "/pages/"
+#        weight = 4
 
 # Footer
   [[menu.footer]]
