@@ -9,7 +9,7 @@ categories:
 tags:
   - amateur-radio
 ---
-Recently, I accidentally ended participating in a
+Recently, I (Joni OH2EWL) accidentally ended up participating in a
 [amateur radio contest](https://en.wikipedia.org/wiki/Contesting).
 I was checking in
 [pskreporter.info](https://pskreporter.info/)
@@ -46,7 +46,7 @@ And who heard me:
 
 [![](/illustration/6m-nac-2022-11-10-OH2EWL-sent.png)](/illustration/6m-nac-2022-11-10-OH2EWL-sent.png)
 
-For next months contest, I'm planning to go to the
+For next month's contest, I'm planning to go to the
 [most prominent peak](https://en.wikipedia.org/wiki/Malminkartanonhuippu)
 we have around here and work with a portable dipole. This should (in theory)
 improve the results significantly. But let's see&mdash; 
