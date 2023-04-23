@@ -1,6 +1,6 @@
 ---
 title: "CV"
-date: 2022-02-07T18:00:00+00:00
+date: 2023-04-23T16:00:00+00:00
 draft: false
 ---
 Joni Kähärä
@@ -41,9 +41,8 @@ Some of the things that bring him joy in the professional context include:
 
 11/2019 &ndash; [Advian Oy](https://advian.fi/)
 
-Below I've listed the longer, outsourcing-type gigs only.
-
-* Q1/2022 &ndash; Systems herding at
+* Q3/2023 &ndash; tbd!
+* Q1/2022 &ndash; Q2/2023 Systems herding as an external at
   [RELEX](https://www.relexsolutions.com/)
 * Q4/2020 &ndash; Q1/2022 [Digirata](https://digirata.fi/) positioning backend
   project
@@ -99,9 +98,9 @@ Below I've listed the longer, outsourcing-type gigs only.
 1/1999 &ndash; 2/2000 Civilian Service, [Kotkan Opisto](https://www.opistopalvelut.fi/kotka/)
 
 * Mostly general tech support in a Windows workstation environment
-* Plus some MS Access "development"
-* Demonstrated how easy it was to crack passwords on a shared Unix box without /etc/shadow
-  but my disclosure wasn't received that well
+* Plus some MS Access "database" "development"
+* Bonus anecdote: demonstrated how easy it was to crack passwords on a shared Unix box without
+  `/etc/shadow` but my disclosure wasn't received that well `¯\_(ツ)_/¯`
 
 1/1998 &ndash; 9/1998 Cardinal Information Systems Oy (Company bankrupt)
 
@@ -121,4 +120,4 @@ English: fluent (spoken and written)
 
 ## Other
 
-Tinkering with electronics and radios is fun, too.
+Tinkering with electronics and [radios](https://oh2ewl.async.fi/) is fun, too.
