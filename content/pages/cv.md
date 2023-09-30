@@ -1,6 +1,6 @@
 ---
 title: "CV"
-date: 2023-04-23T16:00:00+00:00
+date: 2023-09-30T00:00:00+00:00
 draft: false
 ---
 Joni Kähärä
@@ -15,39 +15,44 @@ Joni Kähärä
 
 ## Profile
 
-Joni (b. 1975) is a programmer and general "DevOps" person from Helsinki, Finland.
+Joni (b. 1975) is a programmer, machinist, and dilettante from Helsinki, Finland.
 He has worked in the technology industry since 1997.
 
 Some of the things that bring him joy in the professional context include:
 
-* Remote work. Open, preferably asynchronous, text-based communication.
-* Automating things that can be automated. Think Ansible, Terraform, and
-  Kubernetes. And GitHub and GitLab workflows.
+* Remote work. Open, preferably asynchronous, text-based communication. Lack
+  of hierarchy.
+* Automating things that can be automated. Think Ansible, Terraform, Kubernetes,
+  and Helm and Flux. And GitHub and GitLab workflows.
 * Keeping things observable with the likes of Prometheus, Alertmanager, and
   Grafana.
-* Enabling domain specialists to write testable sets of microservices that
-  can be deployed with least effort, and changes of which can be managed
-  controllably.
+* Troubleshooting weird and complex situations, especially ones revolving around
+  networking.
+* Working with people possessing a built-in, _sufficiently paranoid_ approach
+  towards cybersecurity.
 * Working with services on "edge", or in other words things that interface
   with the physical world. Also anything with tight latency requirements.
-* Writing readable, robust, and performant code (and tests) in Go or Python
+* Writing readable, robust, and performant code (including tests) in Go or Python
   that doesn't waste resources. Rust and C have their special time and place,
   too.
+* ^That being said, sometimes a quick hack with no polish is _good enough_.
+* Working with domain specialists.
 * Writing readable documentation (Markdown, Pandoc preferred). Also technical
-  writing in general, and reading anything that is well-written. Well thought
-  out diagrams always a huge plus.
+  writing in general, and reading anything well-written. Properly thought out
+  diagrams always a huge plus.
 
 ## Work Experience
 
-11/2019 &ndash; [Advian Oy](https://advian.fi/)
+10/2019 &ndash; Taking a little break from work and looking around while at it
 
-* Q3/2023 &ndash; tbd!
+11/2019 &ndash; 10/2023 [Advian Oy](https://advian.fi/)
+
 * Q1/2022 &ndash; Q2/2023 Systems herding as an external at
   [RELEX](https://www.relexsolutions.com/)
 * Q4/2020 &ndash; Q1/2022 [Digirata](https://digirata.fi/) positioning backend
   project
   * Day to day work consisted mostly of herding AWS machinery in general and
-    Kubernetes (EKS) machinery in particular, and coding in Go
+    Kubernetes (EKS) machinery in particular, and coding microservices in Go
   * Services' development is supported by, and they're deployed with GitHub
     Actions-based workflows. Kafka (MSK) is the backbone.
 
