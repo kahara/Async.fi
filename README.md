@@ -12,8 +12,8 @@ Test with Caddy:
 
 ```console
 hugo
-docker-compose build --no-cache \
-  && docker-compose up  # http://localhost:80/
+docker compose build --no-cache \
+  && docker compose up  # http://localhost:80/
 ```
 
 ## Deploy
@@ -29,6 +29,6 @@ Then, where
 composition is running:
 
 ```console
-docker-compose pull
-docker-compose up --detach --force-recreate www
+docker compose pull
+docker compose up --detach --force-recreate www
 ```
