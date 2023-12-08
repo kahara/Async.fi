@@ -18,7 +18,8 @@ Joni Kähärä
 Joni (b. 1975) is a programmer, machinist, and dilettante from Helsinki, Finland.
 He has worked in the technology industry since 1997.
 
-Some of the things that bring him joy in the professional context include:
+Some of the things that bring him joy in the professional context include, in no
+particular order:
 
 * Remote work. Open, preferably asynchronous, text-based communication. Lack
   of hierarchy.
@@ -43,7 +44,7 @@ Some of the things that bring him joy in the professional context include:
 
 ## Work Experience
 
-10/2019 &ndash; Taking a little break from work and looking around while at it
+10/2023 &ndash; Taking a little break from work and looking around while at it
 
 11/2019 &ndash; 10/2023 [Advian Oy](https://advian.fi/)
 
@@ -94,18 +95,6 @@ Some of the things that bring him joy in the professional context include:
   through C/GTK+ to a web-based system; actual hardware controlled included various
   gate control systems, video matrices and programmable logic controllers
 * Numerous smaller software development projects, including embedded things
-
-2/2000 &ndash; 10/2000 [Suomen Posti Oy](https://www.posti.fi/en/)
-
-* Morning newspaper delivery (0130h&ndash;)
-* This was _real work_
-
-1/1999 &ndash; 2/2000 Civilian Service, [Kotkan Opisto](https://www.opistopalvelut.fi/kotka/)
-
-* Mostly general tech support in a Windows workstation environment
-* Plus some MS Access "database" "development"
-* Bonus anecdote: demonstrated how easy it was to crack passwords on a shared Unix box without
-  `/etc/shadow` but my disclosure wasn't received that well `¯\_(ツ)_/¯`
 
 1/1998 &ndash; 9/1998 Cardinal Information Systems Oy (Company bankrupt)
 
