@@ -1,4 +1,4 @@
-FROM caddy@sha256:7da0f90273e1961d9c38d26809f84d4ef3cdc9b4fc330a9cab22015d7c9e8228
+FROM caddy@sha256:ca031cd33c788ebe467c94348400e5bf263178f9619f3993af8373f18681b8fd
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY public/ /var/www/html/

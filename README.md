@@ -13,7 +13,7 @@ Test with Caddy:
 ```console
 hugo
 docker compose build --no-cache \
-  && docker compose up  # http://localhost:80/
+  && docker compose up  # http://localhost:8080/
 ```
 
 ## Deploy
