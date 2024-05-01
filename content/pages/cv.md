@@ -44,18 +44,29 @@ particular order:
 
 ## Work Experience
 
-10/2023 &ndash; Taking a little break from work and looking around while at it
+5/2024 &ndash; [Datalounges Oy](https://datalounges.com/)
+
+* Senior cloud engineer
+
+10/2023 &ndash; 4/2024 Taking a little break from work and looking around while at it
 
 11/2019 &ndash; 10/2023 [Advian Oy](https://advian.fi/)
 
-* Q1/2022 &ndash; Q2/2023 Systems herding as an external at
-  [RELEX](https://www.relexsolutions.com/)
+A variety of projects, including:
+
 * Q4/2020 &ndash; Q1/2022 [Digirata](https://digirata.fi/) positioning backend
   project
   * Day to day work consisted mostly of herding AWS machinery in general and
     Kubernetes (EKS) machinery in particular, and coding microservices in Go
   * Services' development is supported by, and they're deployed with GitHub
     Actions-based workflows. Kafka (MSK) is the backbone.
+* Q1/2022 &ndash; Q2/2023 Systems herding as an external at
+  [RELEX](https://www.relexsolutions.com/)
+  * Development of microservices in Go and Rust
+  * Testing and deployment automation, including GitLab pipelining
+  * General Kubernetes (AKS) work, including enhancing the observability and
+    cybersecurity situations
+  * Plenty of troubleshooting, a lot of it related to Kafka
 
 2/2018 &ndash; 11/2019 [CGI Suomi Oy](https://www.cgi.fi/)
 
