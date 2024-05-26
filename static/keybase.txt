@@ -1,0 +1,86 @@
+==================================================================
+https://keybase.io/kahara
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://async.fi
+  * I am kahara (https://keybase.io/kahara) on keybase.
+  * I have a public key with fingerprint 091A 4768 3112 61FA 195C  F846 0125 54C2 949C E25E
+
+To do so, I am signing this object:
+
+{
+  "body": {
+    "key": {
+      "eldest_kid": "012064d20b7481f8924a576c0a1f93febc98e8af718c6d4237a0b7fd6e61996fd4e70a",
+      "fingerprint": "091a4768311261fa195cf846012554c2949ce25e",
+      "host": "keybase.io",
+      "key_id": "012554c2949ce25e",
+      "kid": "0101e5b4c8892d55c41f6011a44792785fdfb4e5006839e5ba65a6359cce884536ce0a",
+      "uid": "177f949ee950de499b31f81261931419",
+      "username": "kahara"
+    },
+    "merkle_root": {
+      "ctime": 1644422478,
+      "hash_meta": "553c5af60e4b80b06fb1cf5a916fa9fddba50ef993b42ef6de6db712a3d46c7b",
+      "seqno": 21834256
+    },
+    "revoke": {
+      "sig_ids": [
+        "67b0626d09ad61355ba6af0e83f0ac32cb9f3498a24a584143128266a712470f0f"
+      ]
+    },
+    "service": {
+      "hostname": "async.fi",
+      "protocol": "https:"
+    },
+    "type": "web_service_binding",
+    "version": 1
+  },
+  "ctime": 1644422484,
+  "expire_in": 157680000,
+  "prev": "eba35dd5c220c9d5aab0eb1a3343f6fa7bc6774a0b9f598ab11d59acaadffc86",
+  "seqno": 45,
+  "tag": "signature"
+}
+
+which yields the signature:
+
+-----BEGIN PGP MESSAGE-----
+
+owFdk3tMFEccxw98gqINAhWClG7UBIO6szszu3NF6UPBplZLawIJlHN2d4Y7gbvz
+dkUJxUcfPtCqNeIDJY1aq9bGlKC2FjUtpSqiwRpNsQq1JNo04FsbqzV2lkiauP9s
+dvL9fb+f+c7s+rgBntioqHFzmjdu7y6OavvL8BgDri2ukoyQVSl5q6RS1vdiZRaz
+HV9pwJK8kgwUGUNLkQ0N6oDrRIEUadiUKeBE5cwwic50yjWgm9iCiqpRIeUWZhgQ
+grkFmSZTKVPigWAJi4QjgaDj2hJAoYZ1FQAFA04BQSbXIRZxCEFTIZCYTEFMDPpD
+tjsh4Axqs0mBkFgTH75+vOf1/dwyYMiApi6QLYRMCLhwF6lQI4qmI25xAzIkywKC
+CCXFiGIVEdNkug6Rik3Wx72gzw5oGhcZjBEkWwwSYqiiDJedqAAC4gptFgnScuay
+Uj+NUKk6UypnkdIy5ouEQo5brekEXAHAEEJFgZoutkdtv6+cOVTMIaSaiApOBg1d
+NmTMDWByRAnAnBJuWQZFMuOEqAZUGMcWw5ahAYWqFsSmZggKm80PhiSvAnQVKggL
+hAirCJUyN90OlIjWbMlbKGFNuP8QUbAlE2phoCK3AcplpqtcpqaqmAbhKiQ6dQ9c
+hwCqQNEVjKnIg5rMZS69X+3mRSoCZp+9e1DPCqB2ZdCcxAMCKBwJOSEzVCZW/Y4T
+tr1uLU5l2JUtZIbvmYHPCAQtcUXERAWL2IFQUNQklM81psNMiS0KByLMF3AV4irq
+snjcHFYhLJlBVWRZyFQU2SQWotSQmQGoqkKVixY1w8SaBsUlJRyJ3RkAWIhQk1KL
+c1PH/1cIkeCkJcJT9BakzoIIk6pjV0WrAz1RsZ4xSS8PjEnJ9YN4+ii56GFO/281
+KNr9pzyxMS/0r1zfPPJJgjdn96bFdtIa7cc89RXnWGHnjLcabtefmf3gUHRHs33O
+l9wZl/p1d9vQ4cei6/cltG9clnvRju5dN2bAzQVXRiyTT49OWrdr0fjP8wvrDOVU
+5etv7px0aHpowgcvxVxZsX9fyhjobciOSzswnN9T6+817e52rqYj/xw27dRhq7W3
+2xg5ZOosD0GsMXVF406l69P4uS1pWUVLUXH03jeOzuQ568Zu7/gy8VJN4+r8jgug
+vnO8nJea8CTu1p3zuy9tWt96Y9VrE2c1Th733a0tD99uP17VMLeD35342bb7WQ8n
+LvYePXHeeJLc3DJl7bk7y5MmxDY+ut7T0p73/ZYZO7KWdCyZcnBJQ+2GroTZxc1X
+44dsrJ1eVNM+9fGLM/JOF7RWP/7t3xH/hM9uzv8qbsiDnBuTR63dkdKcuOGjjj1n
+c0ffHF0K579XdfXDa9MKYzI+id+UXlYw+zD4NvlSbOawtPve1IODei9HJh+/XLVs
+bfmB2t6RJ/CZaz83HQwl1nHt95NlGTW1Gxa2FjT2nFsf42THF21NLg6ffzo06sLt
+kyszm+y6jPjDB+btGTUsOystpaB30Jqao509052dv75b0r50cO64Jrvl74SfupSE
+urbkd9Jn/pHWzJ/iI7+ox278uasr/0hp4E5ixrCPU1qiavbdn7dtbE/28rt7PHNp
+6zdbWcXK/YOTh7fd3usvfvWL9PH84n8=
+=9MUJ
+-----END PGP MESSAGE-----
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/kahara
+
+==================================================================

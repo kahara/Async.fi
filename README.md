@@ -11,8 +11,9 @@ hugo new posts/postname.md
 Test with Caddy:
 
 ```console
-sudo snap install hugo
-hugo && docker-compose build --no-cache && docker-compose up
+hugo
+docker compose build --no-cache \
+  && docker compose up  # http://localhost:8080/
 ```
 
 ## Deploy
@@ -28,6 +29,6 @@ Then, where
 composition is running:
 
 ```console
-docker-compose pull
-docker-compose up --detach --force-recreate www
+docker compose pull
+docker compose up --detach --force-recreate www
 ```

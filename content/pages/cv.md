@@ -1,6 +1,6 @@
 ---
 title: "CV"
-date: 2022-02-07T18:00:00+00:00
+date: 2023-09-30T00:00:00+00:00
 draft: false
 ---
 Joni Kähärä
@@ -12,36 +12,61 @@ Joni Kähärä
 
 [github.com/kahara](https://github.com/kahara)
 [gitlab.com/kahara](https://gitlab.com/kahara)
-[twitter.com/kahara](https://twitter.com/kahara)
 
 ## Profile
 
-Joni (b. 1975) is a programmer and general "DevOps" person from Helsinki, Finland.
+Joni (b. 1975) is a programmer, machinist, and dilettante from Helsinki, Finland.
 He has worked in the technology industry since 1997.
 
-Some of the things that bring him joy in the professional context include:
+Some of the things that bring him joy in the professional context include, in no
+particular order:
 
-* Remote work. Open, preferably asynchronous, text-based communication.
-* Automating things that can be automated. Think Ansible, Terraform, and Kubernetes.
-  And GitHub and GitLab workflows.
-* Enabling domain specialists to write testable sets of microservices that can be deployed
-  with least effort, and changes of which can be managed controllably.
-* Working with services on "edge", or in other words things that interface with the real world.
-  Also anything with tight latency requirements.
-* Writing readable, robust, and performant code (and tests) in Go or Python that doesn't
-  waste resources. Rust and C have their special time and place, too.
-* Writing readable documentation (Markdown, Pandoc preferred). Also technical writing in general,
-  and reading anything that is well-written. Well thought out diagrams always a huge plus.
+* Remote work. Open, preferably asynchronous, text-based communication. Lack
+  of hierarchy.
+* Automating things that can be automated. Think Ansible, Terraform, Kubernetes,
+  and Helm and Flux. And GitHub and GitLab workflows.
+* Keeping things observable with the likes of Prometheus, Alertmanager, and
+  Grafana.
+* Troubleshooting weird and complex situations, especially ones revolving around
+  networking.
+* Working with people possessing a built-in, _sufficiently paranoid_ approach
+  towards cybersecurity.
+* Working with services on "edge", or in other words things that interface
+  with the physical world. Also anything with tight latency requirements.
+* Writing readable, robust, and performant code (including tests) in Go or Python
+  that doesn't waste resources. Rust and C have their special time and place,
+  too.
+* ^That being said, sometimes a quick hack with no polish is _good enough_.
+* Working with domain specialists.
+* Writing readable documentation (Markdown, Pandoc preferred). Also technical
+  writing in general, and reading anything well-written. Properly thought out
+  diagrams always a huge plus.
 
 ## Work Experience
 
-11/2019 &ndash; Present [Advian Oy](https://advian.fi/)
+5/2024 &ndash; [Datalounges Oy](https://datalounges.com/)
 
-* Technical Specialist, mostly in "Digirata positioning backend" project since Q4/2020
-* Day to day work consists mostly of herding AWS machinery in general and Kubernetes (EKS) machinery
-  in particular, and coding in Go
-* Services' development is supported by, and they're deployed with GitHub Actions-based workflows.
-  Kafka (MSK) is the backbone.
+* Senior cloud engineer
+
+10/2023 &ndash; 4/2024 Taking a little break from work and looking around while at it
+
+11/2019 &ndash; 10/2023 [Advian Oy](https://advian.fi/)
+
+A variety of projects, including:
+
+* Q4/2020 &ndash; Q1/2022 [Digirata](https://digirata.fi/) positioning backend
+  project
+  * Day to day work consisted mostly of herding AWS machinery in general and
+    Kubernetes (EKS) machinery in particular, and coding microservices in Go
+  * Services' development is supported by, and they're deployed with GitHub
+    Actions-based workflows. Kafka (MSK) is the backbone.
+* Q1/2022 &ndash; Q2/2023 Systems herding as an external at
+  [RELEX](https://www.relexsolutions.com/)
+  * Development of microservices in Go and Rust
+  * Testing and deployment automation, including GitLab pipelining
+  * General Kubernetes (AKS) work, including enhancing the observability and
+    cybersecurity situations
+  * Plenty of troubleshooting, a lot of it related to Kafka
 
 2/2018 &ndash; 11/2019 [CGI Suomi Oy](https://www.cgi.fi/)
 
@@ -82,18 +107,6 @@ Some of the things that bring him joy in the professional context include:
   gate control systems, video matrices and programmable logic controllers
 * Numerous smaller software development projects, including embedded things
 
-2/2000 &ndash; 10/2000 [Suomen Posti Oy](https://www.posti.fi/en/)
-
-* Morning newspaper delivery (0130h&ndash;)
-* This was _real work_
-
-1/1999 &ndash; 2/2000 Civilian Service, [Kotkan Opisto](https://www.opistopalvelut.fi/kotka/)
-
-* Mostly general tech support in a Windows workstation environment
-* Plus some MS Access "development"
-* Demonstrated how easy it was to crack passwords on a shared Unix box without /etc/shadow
-  but my disclosure wasn't received that well
-
 1/1998 &ndash; 9/1998 Cardinal Information Systems Oy (Company bankrupt)
 
 * Maintaining ActiveX (C++) code of an early micropayment system
@@ -112,4 +125,4 @@ English: fluent (spoken and written)
 
 ## Other
 
-Tinkering with electronics and radios is fun, too.
+Tinkering with electronics and [radios](https://oh2ewl.async.fi/) is fun, too.
