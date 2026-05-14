@@ -1,9 +1,18 @@
 baseURL = 'https://async.fi/'
-languageCode = 'en-us'
+locale = 'en-us'
 relativeURLs = true
 title = 'async.fi'
 copyright = 'Joni Kähärä'
 theme = 'smol'
+
+defaultContentLanguage = 'en'
+defaultContentLanguageInSubdir = false
+
+capitalizeListTitles = false
+
+[languages]
+  [languages.en]
+    weight = 1
 
 [markup]
   [markup.highlight]
@@ -57,14 +66,19 @@ theme = 'smol'
         weight = 1
 
   [[menu.footer]]
+        name = "codeberg"
+        url = "https://codeberg.org/kahara"
+        weight = 2
+
+  [[menu.footer]]
         name = "github"
         url = "https://github.com/kahara"
-        weight = 2
+        weight = 3
 
   [[menu.footer]]
         name = "gitlab"
         url = "https://gitlab.com/kahara"
-        weight = 3
+        weight = 4
 
   [[menu.footer]]
         name = "old stuff"

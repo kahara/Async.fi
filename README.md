@@ -11,7 +11,7 @@ hugo new posts/postname.md
 Test with Caddy:
 
 ```console
-hugo
+hugo build
 docker compose build --no-cache \
   && docker compose up  # http://localhost:8080/
 ```
@@ -19,8 +19,8 @@ docker compose build --no-cache \
 ## Deploy
 
 ```console
-hugo
-docker build --no-cache --tag jonikahara/www-async-fi:latest .
+hugo build
+docker build --tag jonikahara/www-async-fi:latest .
 docker push jonikahara/www-async-fi:latest
 ```
 
