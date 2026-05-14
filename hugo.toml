@@ -6,7 +6,9 @@ copyright = 'Joni Kähärä'
 theme = 'smol'
 
 defaultContentLanguage = 'en'
-defaultContentLanguageInSubdir = true
+defaultContentLanguageInSubdir = false
+
+capitalizeListTitles = false
 
 [languages]
   [languages.en]
