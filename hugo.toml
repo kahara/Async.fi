@@ -1,9 +1,16 @@
 baseURL = 'https://async.fi/'
-languageCode = 'en-us'
+locale = 'en-us'
 relativeURLs = true
 title = 'async.fi'
 copyright = 'Joni Kähärä'
 theme = 'smol'
+
+defaultContentLanguage = 'en'
+defaultContentLanguageInSubdir = true
+
+[languages]
+  [languages.en]
+    weight = 1
 
 [markup]
   [markup.highlight]
